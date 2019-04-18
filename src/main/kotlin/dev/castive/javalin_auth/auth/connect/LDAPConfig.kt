@@ -16,12 +16,12 @@
 
 package dev.castive.javalin_auth.auth.connect
 
-data class LDAPConfig(val server: String,
+public class LDAPConfig(val server: String,
                       val port: Int = 389,
                       val contextDN: String,
                       val serviceUserDN: String,
                       val serviceUserPassword: String) {
-    data class Extras(val userFilter: String,
+    public class Extras(val userFilter: String,
                       val uid: String,
                       val removeStale: Boolean = true,
                       val syncRate: Long = 300000,

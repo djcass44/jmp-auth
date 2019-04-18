@@ -20,36 +20,36 @@ import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.external.UserVerification
 
-class InternalProvider(private val verification: UserVerification?): BaseProvider {
-    companion object {
-        const val SOURCE_NAME = "local"
+public class InternalProvider(private val verification: UserVerification?): BaseProvider {
+    public companion object {
+        public const val SOURCE_NAME = "local"
     }
 
-    override fun setup() {
-
-    }
-
-    override fun tearDown() {
+    public override fun setup() {
 
     }
 
-    override fun getUsers(): ArrayList<User>? {
+    public override fun tearDown() {
+
+    }
+
+    public override fun getUsers(): ArrayList<User>? {
         return arrayListOf()
     }
 
-    override fun getGroups(): ArrayList<Group> {
+    public override fun getGroups(): ArrayList<Group> {
         return arrayListOf()
     }
 
-    override fun getLogin(uid: String, password: String): String? {
+    public override fun getLogin(uid: String, password: String): String? {
         return verification?.getToken(uid, password)
     }
 
-    override fun getName(): String {
+    public override fun getName(): String {
         return SOURCE_NAME
     }
 
-    override fun connected(): Boolean {
+    public override fun connected(): Boolean {
         return true
     }
 }

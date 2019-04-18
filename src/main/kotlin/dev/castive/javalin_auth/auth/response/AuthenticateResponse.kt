@@ -16,7 +16,7 @@
 
 package dev.castive.javalin_auth.auth.response
 
-object AuthenticateResponse {
-    const val header = "WWW-Authenticate"
-    const val response = "Bearer realm=\"example\""
+public object AuthenticateResponse {
+    public const val header = "WWW-Authenticate"
+    public const val response = "Bearer realm=\"example\""
 }

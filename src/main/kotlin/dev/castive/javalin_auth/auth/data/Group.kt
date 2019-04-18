@@ -16,4 +16,4 @@
 
 package dev.castive.javalin_auth.auth.data
 
-data class Group(val name: String)
+public data class Group(val name: String)

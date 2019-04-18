@@ -1,15 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.3.20-eap-52"
+    kotlin("jvm") version "1.3.30"
     maven
 }
 
 group = "dev.castive"
-version = "2.1"
+version = "2.1.4"
 
 repositories {
-    maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
     maven(url = "https://jitpack.io")
     jcenter()
 }

@@ -26,8 +26,8 @@ import dev.castive.log2.Log
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras: LDAPConfig.Extras) {
-    companion object {
+public class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras: LDAPConfig.Extras) {
+    public companion object {
         lateinit var internalProvider: InternalProvider
         var primaryProvider: BaseProvider? = null
 
@@ -38,7 +38,7 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
     private var syncAttempts = 0
     private lateinit var syncTimer: Timer
 
-    fun init(verification: UserVerification) {
+    public fun init(verification: UserVerification) {
         Providers.verification = verification
         internalProvider = InternalProvider(verification)
         initLDAP()

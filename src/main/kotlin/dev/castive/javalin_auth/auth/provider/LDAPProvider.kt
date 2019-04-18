@@ -26,18 +26,18 @@ import java.util.*
 import javax.naming.AuthenticationException
 import javax.naming.NamingException
 
-class LDAPProvider(private val config: LDAPConfig,
+public class LDAPProvider(private val config: LDAPConfig,
                    private val configExtras: LDAPConfig.Extras,
                    private val verification: UserVerification?): BaseProvider {
-    companion object {
-        const val SOURCE_NAME = "ldap"
+    public companion object {
+        public const val SOURCE_NAME = "ldap"
     }
     private lateinit var connection: LDAPConnection
 
     var connected = false
         private set
 
-    override fun setup() = try {
+    public override fun setup() = try {
         connection = LDAPConnection(config)
         connected = connection.connected
         Log.i(javaClass, "LDAP connected: $connected")
@@ -51,11 +51,11 @@ class LDAPProvider(private val config: LDAPConfig,
         Log.e(javaClass, "LDAP -> Couldn't connect: $e")
     }
 
-    override fun tearDown() {
+    public override fun tearDown() {
         connection.close()
     }
 
-    override fun getUsers(): ArrayList<User>? {
+    public override fun getUsers(): ArrayList<User>? {
         val users = arrayListOf<User>()
         val result = connection.searchFilter(configExtras.userFilter) ?: return null
         for (r in result) {
@@ -65,21 +65,21 @@ class LDAPProvider(private val config: LDAPConfig,
         }
         return users
     }
-    override fun getGroups(): ArrayList<Group> {
+    public override fun getGroups(): ArrayList<Group> {
         throw NotImplementedError()
     }
 
-    override fun getLogin(uid: String, password: String): String? {
+    public override fun getLogin(uid: String, password: String): String? {
         val valid = connection.checkUserAuth(uid, password, configExtras.uid)
         return if (valid) verification?.getToken(uid)
         else null
     }
 
-    override fun getName(): String {
+    public override fun getName(): String {
         return SOURCE_NAME
     }
 
-    override fun connected(): Boolean {
+    public override fun connected(): Boolean {
         return connection.connected
     }
 }

@@ -24,11 +24,11 @@ import dev.castive.securepass3.PasswordGenerator
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class TokenProvider {
-    companion object {
+public class TokenProvider {
+    public companion object {
         private lateinit var instance: TokenProvider
 
-        fun get(): TokenProvider {
+        public fun get(): TokenProvider {
             if(!this::instance.isInitialized) instance = TokenProvider()
             return instance
         }
@@ -37,7 +37,7 @@ class TokenProvider {
     private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
 
     // This should only be used for request tokens
-    fun create(user: String): String? = try {
+    public fun create(user: String): String? = try {
         val expiry = Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(8))
         com.auth0.jwt.JWT.create()
             .withIssuer(javaClass.name)
@@ -51,7 +51,7 @@ class TokenProvider {
         Log.e(javaClass, "Failed to generate token: [user: $user, cause: $e]")
         null
     }
-    fun create(user: String, userToken: String): String? = try {
+    public fun create(user: String, userToken: String): String? = try {
         // Expires in 1 hour
         val expiry = Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1))
         com.auth0.jwt.JWT.create()
@@ -66,7 +66,7 @@ class TokenProvider {
         Log.e(javaClass, "Failed to generate token: [user: $user, cause: $e]")
         null
     }
-    fun verifyLax(token: String, verification: UserVerification): ValidUserClaim? {
+    public fun verifyLax(token: String, verification: UserVerification): ValidUserClaim? {
         val verify = com.auth0.jwt.JWT.require(algorithm)
             .withIssuer(javaClass.name)
             .acceptLeeway(TimeUnit.HOURS.toMillis(1))
@@ -84,7 +84,7 @@ class TokenProvider {
             null
         }
     }
-    fun verify(token: String, verification: UserVerification): ValidUserClaim? {
+    public fun verify(token: String, verification: UserVerification): ValidUserClaim? {
         val verify = com.auth0.jwt.JWT.require(algorithm)
             .withIssuer(javaClass.name)
             .acceptLeeway(TimeUnit.HOURS.toMillis(1))
@@ -105,7 +105,7 @@ class TokenProvider {
             null
         }
     }
-    fun mayBeToken(token: String?): Boolean {
+    public fun mayBeToken(token: String?): Boolean {
         return (token != null && token.isNotBlank() && token != "null" && token.split(".").size == 3)
     }
 }

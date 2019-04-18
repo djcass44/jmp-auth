@@ -16,4 +16,4 @@
 
 package dev.castive.javalin_auth.auth.except
 
-class MinimalConnectionBreachException: Exception("This query is minimal or nested, it is not allowed for standard queries.")
+public class MinimalConnectionBreachException: Exception("This query is minimal or nested, it is not allowed for standard queries.")
