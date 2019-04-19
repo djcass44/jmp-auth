@@ -16,7 +16,7 @@
 
 package dev.castive.javalin_auth.auth.connect
 
-import dev.castive.javalin_auth.auth.except.MinimalConnectionBreachException
+import dev.castive.javalin_auth.except.MinimalConnectionBreachException
 import dev.castive.log2.Log
 import java.util.*
 import javax.naming.Context
