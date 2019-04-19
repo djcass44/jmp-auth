@@ -25,6 +25,13 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 public class TokenProvider {
+    class TokenAgeProfile(val tokenLimit: Long = TimeUnit.HOURS.toMillis(1), val refreshLimit: Long = TimeUnit.HOURS.toMillis(8)) {
+        companion object {
+            val DEFAULT = TokenAgeProfile(TimeUnit.HOURS.toMillis(1), TimeUnit.HOURS.toMillis(8))
+            val DEV = TokenAgeProfile(TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(5))
+        }
+    }
+
     public companion object {
         private lateinit var instance: TokenProvider
 
@@ -32,13 +39,15 @@ public class TokenProvider {
             if(!this::instance.isInitialized) instance = TokenProvider()
             return instance
         }
+
+        var ageProfile = TokenAgeProfile.DEFAULT
     }
 
     private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
 
     // This should only be used for request tokens
     public fun create(user: String): String? = try {
-        val expiry = Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(8))
+        val expiry = Date(System.currentTimeMillis() + ageProfile.refreshLimit)
         com.auth0.jwt.JWT.create()
             .withIssuer(javaClass.name)
             .withClaim(JWT.headerUser, user)
@@ -53,7 +62,7 @@ public class TokenProvider {
     }
     public fun create(user: String, userToken: String): String? = try {
         // Expires in 1 hour
-        val expiry = Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1))
+        val expiry = Date(System.currentTimeMillis() + ageProfile.tokenLimit)
         com.auth0.jwt.JWT.create()
             .withIssuer(javaClass.name)
             .withClaim(JWT.headerUser, user)
