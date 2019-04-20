@@ -30,12 +30,12 @@ object UserAction {
     var verification: UserVerification? = null
 
     fun get(ctx: Context, verification: UserVerification): ValidUserClaim {
-        val jwt = JWT.get().map(ctx) ?: run {
+        val jwt = JWT.map(ctx) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
             throw ForbiddenResponse("Token verification failed")
         }
         Log.ok(javaClass, "JWT parse valid")
-        return TokenProvider.get().verify(jwt, verification) ?: run {
+        return TokenProvider.verify(jwt, verification) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
             throw ForbiddenResponse("Token verification failed")
         }
@@ -48,9 +48,9 @@ object UserAction {
         return get(ctx, verification!!)
     }
     fun getOrNull(ctx: Context, verification: UserVerification): ValidUserClaim? {
-        val jwt = JWT.get().map(ctx) ?: ""
+        val jwt = JWT.map(ctx) ?: ""
         return if(jwt == "null" || jwt.isBlank()) null
-        else TokenProvider.get().verify(jwt, verification)
+        else TokenProvider.verify(jwt, verification)
     }
     fun getOrNull(ctx: Context): ValidUserClaim? {
         if(verification == null) {

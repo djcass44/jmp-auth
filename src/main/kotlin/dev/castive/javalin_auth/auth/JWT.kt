@@ -18,18 +18,10 @@ package dev.castive.javalin_auth.auth
 
 import io.javalin.Context
 
-class JWT {
-    companion object {
-        const val headerToken = "X-Auth-Token"
-        const val headerUser = "X-Auth-User"
-
-        private lateinit var instance: JWT
-
-        fun get(): JWT {
-            if(!this::instance.isInitialized) instance = JWT()
-            return instance
-        }
-    }
+object JWT {
+    const val headerToken = "X-Auth-Token"
+    const val headerUser = "X-Auth-User"
+    const val headerRole = "X-Auth-Role"
 
     fun map(ctx: Context): String? {
         val authHeader = ctx.header("Authorization")
@@ -41,7 +33,7 @@ class JWT {
                 return null
             val jwt = authHeader.split(" ")[1]
             // Check that the contents of the token look like a JWT
-            if(TokenProvider.get().mayBeToken(jwt)) jwt else null
+            if(TokenProvider.mayBeToken(jwt)) jwt else null
         }
         catch (e: IndexOutOfBoundsException) {
             null

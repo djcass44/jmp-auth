@@ -19,7 +19,7 @@ package dev.castive.securepass3
 import java.security.SecureRandom
 import java.util.*
 
-public class PasswordGenerator {
+class PasswordGenerator {
     private val vowels = "aeiou".toCharArray()
     private val consonants = "bchfghjklmnpqrstvwxyz".toCharArray()
 
@@ -28,11 +28,13 @@ public class PasswordGenerator {
     init {
         for (v in vowels) for (c in consonants) pairs.add("" + v + c)
     }
+
     @Deprecated (message = "Not recommended", replaceWith = ReplaceWith("generate(length)"))
-    public fun generateInsecure(length: Int): String {
+    fun generateInsecure(length: Int): String {
         return generate(length).toString()
     }
-    public fun generate(length: Int, strong: Boolean = false): CharArray {
+
+    fun generate(length: Int, strong: Boolean = false): CharArray {
         val result = CharArray(length)
         val random = if(!strong) SecureRandom() else SecureRandom.getInstanceStrong()
         for (i in 0 until (length / 2)) {

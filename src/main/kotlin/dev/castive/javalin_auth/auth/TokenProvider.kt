@@ -24,37 +24,27 @@ import dev.castive.securepass3.PasswordGenerator
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class TokenProvider {
+object TokenProvider {
     class TokenAgeProfile(val tokenLimit: Long = TimeUnit.HOURS.toMillis(1), val refreshLimit: Long = TimeUnit.HOURS.toMillis(8)) {
         companion object {
             val DEFAULT = TokenAgeProfile(TimeUnit.HOURS.toMillis(1), TimeUnit.HOURS.toMillis(8))
             val DEV = TokenAgeProfile(TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(5))
         }
     }
-
-    companion object {
-        private lateinit var instance: TokenProvider
-
-        fun get(): TokenProvider {
-            if(!this::instance.isInitialized) instance = TokenProvider()
-            return instance
-        }
-
-        var ageProfile = TokenAgeProfile.DEFAULT
-    }
-
+    var ageProfile = TokenAgeProfile.DEFAULT
     private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
 
-    fun createRefreshToken(user: String, userToken: String): String? = createToken(user, userToken, ageProfile.refreshLimit)
-    fun createRequestToken(user: String, userToken: String): String? = createToken(user, userToken, ageProfile.tokenLimit)
+    fun createRefreshToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.refreshLimit)
+    fun createRequestToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.tokenLimit)
 
-    fun createToken(user: String, userToken: String, expireDelay: Long): String? = try {
+    fun createToken(user: String, userToken: String, userRole: String, expireDelay: Long): String? = try {
         // Expires in 1 hour
         val expiry = Date(System.currentTimeMillis() + expireDelay)
         com.auth0.jwt.JWT.create()
             .withIssuer(javaClass.name)
             .withClaim(JWT.headerUser, user)
             .withClaim(JWT.headerToken, userToken)
+            .withClaim(JWT.headerRole, userRole)
             .withExpiresAt(expiry)
             .withIssuedAt(Date(System.currentTimeMillis()))
             .sign(algorithm)
