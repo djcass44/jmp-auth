@@ -24,7 +24,7 @@ import dev.castive.securepass3.PasswordGenerator
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-public class TokenProvider {
+class TokenProvider {
     class TokenAgeProfile(val tokenLimit: Long = TimeUnit.HOURS.toMillis(1), val refreshLimit: Long = TimeUnit.HOURS.toMillis(8)) {
         companion object {
             val DEFAULT = TokenAgeProfile(TimeUnit.HOURS.toMillis(1), TimeUnit.HOURS.toMillis(8))
@@ -32,10 +32,10 @@ public class TokenProvider {
         }
     }
 
-    public companion object {
+    companion object {
         private lateinit var instance: TokenProvider
 
-        public fun get(): TokenProvider {
+        fun get(): TokenProvider {
             if(!this::instance.isInitialized) instance = TokenProvider()
             return instance
         }
@@ -45,24 +45,12 @@ public class TokenProvider {
 
     private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
 
-    // This should only be used for request tokens
-    public fun create(user: String): String? = try {
-        val expiry = Date(System.currentTimeMillis() + ageProfile.refreshLimit)
-        com.auth0.jwt.JWT.create()
-            .withIssuer(javaClass.name)
-            .withClaim(JWT.headerUser, user)
-            .withClaim(JWT.headerToken, UUID.randomUUID().toString())
-            .withExpiresAt(expiry)
-            .withIssuedAt(Date(System.currentTimeMillis()))
-            .sign(algorithm)
-    }
-    catch (e: Exception) {
-        Log.e(javaClass, "Failed to generate token: [user: $user, cause: $e]")
-        null
-    }
-    public fun create(user: String, userToken: String): String? = try {
+    fun createRefreshToken(user: String, userToken: String): String? = createToken(user, userToken, ageProfile.refreshLimit)
+    fun createRequestToken(user: String, userToken: String): String? = createToken(user, userToken, ageProfile.tokenLimit)
+
+    fun createToken(user: String, userToken: String, expireDelay: Long): String? = try {
         // Expires in 1 hour
-        val expiry = Date(System.currentTimeMillis() + ageProfile.tokenLimit)
+        val expiry = Date(System.currentTimeMillis() + expireDelay)
         com.auth0.jwt.JWT.create()
             .withIssuer(javaClass.name)
             .withClaim(JWT.headerUser, user)
@@ -75,7 +63,8 @@ public class TokenProvider {
         Log.e(javaClass, "Failed to generate token: [user: $user, cause: $e]")
         null
     }
-    public fun verifyLax(token: String, verification: UserVerification): ValidUserClaim? {
+
+    fun verifyLax(token: String, verification: UserVerification): ValidUserClaim? {
         val verify = com.auth0.jwt.JWT.require(algorithm)
             .withIssuer(javaClass.name)
             .acceptLeeway(TimeUnit.HOURS.toMillis(1))
@@ -93,7 +82,8 @@ public class TokenProvider {
             null
         }
     }
-    public fun verify(token: String, verification: UserVerification): ValidUserClaim? {
+
+    fun verify(token: String, verification: UserVerification): ValidUserClaim? {
         val verify = com.auth0.jwt.JWT.require(algorithm)
             .withIssuer(javaClass.name)
             .acceptLeeway(TimeUnit.HOURS.toMillis(1))
@@ -114,7 +104,8 @@ public class TokenProvider {
             null
         }
     }
-    public fun mayBeToken(token: String?): Boolean {
+
+    fun mayBeToken(token: String?): Boolean {
         return (token != null && token.isNotBlank() && token != "null" && token.split(".").size == 3)
     }
 }

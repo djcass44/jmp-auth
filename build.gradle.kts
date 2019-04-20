@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.castive"
-version = "2.1.4"
+version = "2.1.8"
 
 repositories {
     maven(url = "https://jitpack.io")

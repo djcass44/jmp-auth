@@ -18,20 +18,20 @@ package dev.castive.javalin_auth.auth
 
 import io.javalin.Context
 
-public class JWT {
+class JWT {
     companion object {
-        public const val headerToken = "X-Auth-Token"
-        public const val headerUser = "X-Auth-User"
+        const val headerToken = "X-Auth-Token"
+        const val headerUser = "X-Auth-User"
 
         private lateinit var instance: JWT
 
-        public fun get(): JWT {
+        fun get(): JWT {
             if(!this::instance.isInitialized) instance = JWT()
             return instance
         }
     }
 
-    public fun map(ctx: Context): String? {
+    fun map(ctx: Context): String? {
         val authHeader = ctx.header("Authorization")
         if(authHeader.isNullOrBlank())
             return null
