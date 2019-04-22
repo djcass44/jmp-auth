@@ -48,10 +48,10 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
      * Try to setup LDAP provider if it's enabled
      */
     private fun initLDAP() {
-        primaryProvider = LDAPProvider(ldapConfig, ldapConfigExtras, verification)
-
-        if(ldapConfig.enabled)
+        if(ldapConfig.enabled) {
+            primaryProvider = LDAPProvider(ldapConfig, ldapConfigExtras, verification)
             startCRON()
+        }
     }
 
     private fun startCRON() {
