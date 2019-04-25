@@ -38,6 +38,8 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
     private var syncAttempts = 0
     private lateinit var syncTimer: Timer
 
+    private var syncing = false
+
     fun init(verification: UserVerification) {
         Providers.verification = verification
         internalProvider = InternalProvider(verification)
@@ -55,19 +57,34 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
     }
 
     private fun startCRON() {
-        syncTimer = fixedRateTimer(javaClass.name, true, 0, ldapConfigExtras.syncRate) { sync() }
+        syncTimer = fixedRateTimer(javaClass.name, true, 0, ldapConfigExtras.syncRate) {
+            if(!syncing)
+                sync()
+            else Log.e(javaClass, "Unable to run CRON sync [reason: sync already running]")
+        }
+    }
+
+    fun syncIfPossible() {
+        if(!syncing) {
+            Log.i(javaClass, "Running user requested sync")
+            sync()
+        }
+        else Log.v(javaClass, "Unable to sync [reason: sync already running]")
     }
 
     private fun sync() {
+        syncing = true
         val maxAttempts = ldapConfigExtras.maxConnectAttempts
         if(syncAttempts >= maxAttempts) { // Give up if we fail more than 5 times (default 25 minutes)
             Log.f(javaClass, "Reached maximum failure rate for LDAP sync, giving up")
             syncTimer.cancel()
+            syncing = false
             return
         }
         syncAttempts++
         if(primaryProvider == null) {
             Log.i(javaClass, "Skipping user sync, no provider setup")
+            syncing = false
             return
         }
         Log.i(javaClass, "Running batch update using ${primaryProvider!!::class.java.name}")
@@ -76,10 +93,12 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
         val users = primaryProvider!!.getUsers()
         if(users == null) {
             Log.w(javaClass, "External provider: ${primaryProvider?.getName()} returned null, perhaps it's not connected yet?")
+            syncing = false
             return
         }
         Log.i(javaClass, "External provider: ${primaryProvider?.getName()} found ${users.size} users")
         syncAttempts = 0 // Reset counter because we got a valid connection
         validator.ingestUsers(users)
+        syncing = false
     }
 }

@@ -29,34 +29,34 @@ import io.javalin.ForbiddenResponse
 object UserAction {
     var verification: UserVerification? = null
 
-    fun get(ctx: Context, verification: UserVerification): ValidUserClaim {
+    fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim {
         val jwt = JWT.map(ctx) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
             throw ForbiddenResponse("Token verification failed")
         }
         Log.ok(javaClass, "JWT parse valid")
-        return TokenProvider.verify(jwt, verification) ?: run {
+        return if(lax) TokenProvider.verifyLax(jwt, verification)!! else TokenProvider.verify(jwt, verification) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
             throw ForbiddenResponse("Token verification failed")
         }
     }
-    fun get(ctx: Context): ValidUserClaim {
+    fun get(ctx: Context, lax: Boolean = false): ValidUserClaim {
         if(verification == null) {
             Log.e(javaClass, "No UserVerification has been setup.")
             throw NullPointerException()
         }
-        return get(ctx, verification!!)
+        return get(ctx, verification!!, lax)
     }
-    fun getOrNull(ctx: Context, verification: UserVerification): ValidUserClaim? {
+    fun getOrNull(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
         val jwt = JWT.map(ctx) ?: ""
         return if(jwt == "null" || jwt.isBlank()) null
-        else TokenProvider.verify(jwt, verification)
+        else if(lax) TokenProvider.verifyLax(jwt, verification) else TokenProvider.verify(jwt, verification)
     }
-    fun getOrNull(ctx: Context): ValidUserClaim? {
+    fun getOrNull(ctx: Context, lax: Boolean = false): ValidUserClaim? {
         if(verification == null) {
             Log.e(javaClass, "No UserVerification has been setup.")
             throw NullPointerException()
         }
-        return getOrNull(ctx, verification!!)
+        return getOrNull(ctx, verification!!, lax)
     }
 }
