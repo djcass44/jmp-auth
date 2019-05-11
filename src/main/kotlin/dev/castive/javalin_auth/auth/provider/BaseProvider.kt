@@ -24,6 +24,7 @@ public interface BaseProvider {
     public fun tearDown()
     public fun getUsers(): ArrayList<User>?
     public fun getGroups(): ArrayList<Group>
+    fun userInGroup(group: Group, user: User): Boolean
     public fun getLogin(uid: String, password: String): String?
     public fun getName(): String
     public fun connected(): Boolean
