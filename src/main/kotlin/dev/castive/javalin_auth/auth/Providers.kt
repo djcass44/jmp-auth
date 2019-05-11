@@ -26,7 +26,7 @@ import dev.castive.log2.Log
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras: LDAPConfig.Extras) {
+class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras: LDAPConfig.Extras, private val ldapConfigGroups: LDAPConfig.Groups) {
     companion object {
         lateinit var internalProvider: InternalProvider
         var primaryProvider: BaseProvider? = null
@@ -51,7 +51,7 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
      */
     private fun initLDAP() {
         if(ldapConfig.enabled) {
-            primaryProvider = LDAPProvider(ldapConfig, ldapConfigExtras, verification)
+            primaryProvider = LDAPProvider(ldapConfig, ldapConfigExtras, ldapConfigGroups, verification)
             startCRON()
         }
     }
@@ -97,8 +97,11 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
             return
         }
         Log.i(javaClass, "External provider: ${primaryProvider?.getName()} found ${users.size} users")
+        // Load groups
+        val groups = primaryProvider!!.getGroups()
         syncAttempts = 0 // Reset counter because we got a valid connection
         validator.ingestUsers(users)
+        validator.ingestGroups(groups)
         syncing = false
     }
 }

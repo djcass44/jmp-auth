@@ -26,60 +26,112 @@ import java.util.*
 import javax.naming.AuthenticationException
 import javax.naming.NamingException
 
-public class LDAPProvider(private val config: LDAPConfig,
-                   private val configExtras: LDAPConfig.Extras,
-                   private val verification: UserVerification?): BaseProvider {
-    public companion object {
-        public const val SOURCE_NAME = "ldap"
-    }
-    private lateinit var connection: LDAPConnection
+class LDAPProvider(private val config: LDAPConfig,
+                          private val configExtras: LDAPConfig.Extras,
+                          private val configGroups: LDAPConfig.Groups,
+                          private val verification: UserVerification?): BaseProvider {
+	companion object {
+		const val SOURCE_NAME = "ldap"
+	}
+	private lateinit var connection: LDAPConnection
 
-    var connected = false
-        private set
+	private val userCache = arrayListOf<User>()
 
-    public override fun setup() = try {
-        connection = LDAPConnection(config)
-        connected = connection.connected
-        Log.i(javaClass, "LDAP connected: $connected")
-    }
-    catch (e: AuthenticationException) {
-        connected = false
-        Log.e(javaClass, "LDAP -> Wrong authentication")
-    }
-    catch (e: NamingException) {
-        connected = false
-        Log.e(javaClass, "LDAP -> Couldn't connect: $e")
-    }
+	var connected = false
+		private set
 
-    public override fun tearDown() {
-        connection.close()
-    }
+	override fun setup() = try {
+		connection = LDAPConnection(config)
+		connected = connection.connected
+		Log.i(javaClass, "LDAP connected: $connected")
+	}
+	catch (e: AuthenticationException) {
+		connected = false
+		Log.e(javaClass, "LDAP -> Wrong authentication")
+	}
+	catch (e: NamingException) {
+		connected = false
+		Log.e(javaClass, "LDAP -> Couldn't connect: $e")
+	}
 
-    public override fun getUsers(): ArrayList<User>? {
-        val users = arrayListOf<User>()
-        val result = connection.searchFilter(configExtras.userFilter) ?: return null
-        for (r in result) {
-            val username = r.attributes.get(configExtras.uid).get(0).toString()
-            val role = r.attributes.get("objectClass").get(0).toString()
-            users.add(User(username, role, SOURCE_NAME))
-        }
-        return users
-    }
-    public override fun getGroups(): ArrayList<Group> {
-        throw NotImplementedError()
-    }
+	override fun tearDown() {
+		connection.close()
+	}
 
-    public override fun getLogin(uid: String, password: String): String? {
-        val valid = connection.checkUserAuth(uid, password, configExtras.uid)
-        return if (valid) verification?.getToken(uid)
-        else null
-    }
+	override fun getUsers(): ArrayList<User> {
+		userCache.clear()
+		val result = connection.searchFilter(configExtras.userFilter) ?: return arrayListOf()
+		for (r in result) {
+			Log.d(javaClass, r.attributes.toString())
+			val username = r.attributes.get(configExtras.uid).get(0).toString()
+			Log.d(javaClass, "user: $username")
+			val role = r.attributes.get("objectClass").get(0).toString()
+			userCache.add(User(username, r.nameInNamespace, role, SOURCE_NAME))
+		}
+		return userCache
+	}
 
-    public override fun getName(): String {
-        return SOURCE_NAME
-    }
+	private fun getUserWithDn(dn: String): User? {
+		userCache.forEach {
+			if(it.dn == dn) return it
+		}
+		return null
+	}
 
-    public override fun connected(): Boolean {
-        return connection.connected
-    }
+	override fun getGroups(): ArrayList<Group> {
+		if(userCache.isEmpty()) getUsers()
+		val groups = arrayListOf<Group>()
+		val result = connection.searchFilter(configGroups.groupFilter) ?: return groups
+		for (r in result) {
+			Log.d(javaClass, r.attributes.toString())
+			val name = r.attributes.get(configGroups.gid).get(0).toString()
+			// Get the users in the group
+			val members = r.attributes.get("member").all
+			val users = arrayListOf<User>()
+			while (members.hasMore()) {
+				val m = members.next().toString()
+				val user = getUserWithDn(m)
+				if(user != null) users.add(user)
+			}
+			groups.add(Group(name, r.nameInNamespace, users, SOURCE_NAME))
+		}
+		return groups
+	}
+
+	override fun userInGroup(group: Group, user: User): Boolean {
+		val filter = "(&${configGroups.groupFilter}(${configGroups.groupQuery}=${user.dn}))"
+		Log.d(javaClass, "Using filter: $filter")
+		val res = connection.searchFilter(filter) ?: run {
+			Log.d(javaClass, "Search returned null")
+			return false
+		}
+		Log.d(javaClass, "Search is size: ${res.size}")
+		res.forEach {
+			Log.d(javaClass, "r: ${it.attributes}, name: ${it.nameInNamespace}")
+			val dn = it.nameInNamespace
+			if(dn == group.dn) {
+				val members = it.attributes.get("member").all
+				while (members.hasMore()) {
+					val m = members.next().toString()
+					Log.d(javaClass, "member: $m")
+					if (m == user.dn) return true
+				}
+			}
+		}
+		return false
+	}
+
+	override fun getLogin(uid: String, password: String): String? {
+		val valid = connection.checkUserAuth(uid, password, configExtras.uid)
+		return if (valid) verification?.getToken(uid)
+		else null
+	}
+
+	override fun getName(): String {
+		return SOURCE_NAME
+	}
+
+	override fun connected(): Boolean {
+		return connection.connected
+	}
 }

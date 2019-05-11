@@ -28,4 +28,7 @@ class LDAPConfig(val enabled: Boolean,
                         val syncRate: Long = 300000,
                         val blockLocal: Boolean = false,
                         val maxConnectAttempts: Int = 5)
+    class Groups(val groupFilter: String,
+                 val groupQuery: String,
+                 val gid: String)
 }

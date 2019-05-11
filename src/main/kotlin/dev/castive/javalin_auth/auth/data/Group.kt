@@ -16,4 +16,6 @@
 
 package dev.castive.javalin_auth.auth.data
 
-public data class Group(val name: String)
+data class Group(val name: String, val dn: String, val members: ArrayList<User>, val source: String) {
+	constructor(name: String, dn: String, source: String): this(name, dn, arrayListOf(), source)
+}

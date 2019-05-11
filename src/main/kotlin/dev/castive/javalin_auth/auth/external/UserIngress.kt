@@ -16,8 +16,10 @@
 
 package dev.castive.javalin_auth.auth.external
 
+import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 
 public interface UserIngress {
     public fun ingestUsers(users: ArrayList<User>)
+    fun ingestGroups(groups: ArrayList<Group>)
 }
