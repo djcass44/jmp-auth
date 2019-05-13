@@ -63,9 +63,17 @@ class LDAPProvider(private val config: LDAPConfig,
 		val result = connection.searchFilter(configExtras.userFilter) ?: return arrayListOf()
 		for (r in result) {
 			Log.d(javaClass, r.attributes.toString())
-			val username = r.attributes.get(configExtras.uid).get(0).toString()
+			val username = kotlin.runCatching { r.attributes.get(configExtras.uid).get(0).toString() }.getOrNull()
+			if(username == null) {
+				Log.e(javaClass, "Failed to read name of user, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
+				continue
+			}
 			Log.d(javaClass, "user: $username")
-			val role = r.attributes.get("objectClass").get(0).toString()
+			val role = kotlin.runCatching { r.attributes.get("objectClass").get(0).toString() }.getOrNull()
+			if(role == null) {
+				Log.e(javaClass, "Failed to read objectClass of user, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
+				continue
+			}
 			userCache.add(User(username, r.nameInNamespace, role, SOURCE_NAME))
 		}
 		return userCache
@@ -84,9 +92,17 @@ class LDAPProvider(private val config: LDAPConfig,
 		val result = connection.searchFilter(configGroups.groupFilter) ?: return groups
 		for (r in result) {
 			Log.d(javaClass, r.attributes.toString())
-			val name = r.attributes.get(configGroups.gid).get(0).toString()
+			val name = kotlin.runCatching { r.attributes.get(configGroups.gid).get(0).toString() }.getOrNull()
+			if(name == null) {
+				Log.e(javaClass, "Failed to read name of group, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
+				continue
+			}
 			// Get the users in the group
-			val members = r.attributes.get("member").all
+			val members = kotlin.runCatching { r.attributes.get("member").all }.getOrNull()
+			if(members == null) {
+				Log.e(javaClass, "Failed to read member attribute of group, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
+				continue
+			}
 			val users = arrayListOf<User>()
 			while (members.hasMore()) {
 				val m = members.next().toString()
@@ -110,11 +126,14 @@ class LDAPProvider(private val config: LDAPConfig,
 			Log.d(javaClass, "r: ${it.attributes}, name: ${it.nameInNamespace}")
 			val dn = it.nameInNamespace
 			if(dn == group.dn) {
-				val members = it.attributes.get("member").all
-				while (members.hasMore()) {
-					val m = members.next().toString()
-					Log.d(javaClass, "member: $m")
-					if (m == user.dn) return true
+				val members = kotlin.runCatching { it.attributes.get("member").all }.getOrNull()
+				if(members == null) Log.e(javaClass, "Failed to read name of group, dumping attributes for manual fix: ${runCatching { return@runCatching it.attributes }}")
+				else {
+					while (members.hasMore()) {
+						val m = members.next().toString()
+						Log.d(javaClass, "member: $m")
+						if (m == user.dn) return true
+					}
 				}
 			}
 		}
