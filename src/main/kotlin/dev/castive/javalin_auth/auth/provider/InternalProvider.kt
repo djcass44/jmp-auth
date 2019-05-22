@@ -32,7 +32,6 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 	override fun tearDown() {
 
 	}
-
 	override fun getUsers(): ArrayList<User> {
 		return arrayListOf()
 	}
