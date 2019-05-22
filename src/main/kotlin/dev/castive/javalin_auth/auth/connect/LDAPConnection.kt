@@ -26,7 +26,7 @@ import javax.naming.directory.SearchControls
 import javax.naming.directory.SearchResult
 
 class LDAPConnection(private val config: LDAPConfig,
-                     private val nested: Boolean = false) {
+                     private val nested: Boolean = false, private val reconnectOnLogin: Boolean = false) {
 	var connected = false
 		private set
 	private lateinit var connection: InitialDirContext
@@ -46,6 +46,7 @@ class LDAPConnection(private val config: LDAPConfig,
 		}
 		val env = Hashtable<String, String>()
 		env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
+//		env["com.sun.jndi.ldap.connect.pool"] = "false"
 		env[Context.PROVIDER_URL] = "ldap://${config.server}:${config.port}/"
 		env[Context.SECURITY_PRINCIPAL] = config.serviceUserDN
 		env[Context.SECURITY_CREDENTIALS] = config.serviceUserPassword
@@ -58,6 +59,11 @@ class LDAPConnection(private val config: LDAPConfig,
 			Log.e(javaClass, "LDAP Authentication failure: $e")
 			connected = false
 		}
+	}
+
+	private fun reconnect() {
+		close()
+		connect()
 	}
 
 	/**
@@ -104,6 +110,8 @@ class LDAPConnection(private val config: LDAPConfig,
 	 */
 	fun checkUserAuth(uid: String, password: String, identifier: String = "uid"): Boolean {
 		if(nested) throw MinimalConnectionBreachException()
+		// This is a bad hack and not scalable
+		if(reconnectOnLogin) reconnect()
 		val user = searchFilter("($identifier=$uid)")
 //        Log.d(javaClass, "Found user: $user")
 		if(user == null || user.size == 0 || user.size > 1) return false  // There must be only 1 user with a uid

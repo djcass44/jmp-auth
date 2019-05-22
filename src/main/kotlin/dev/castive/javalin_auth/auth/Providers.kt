@@ -91,11 +91,11 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
         Log.v(javaClass, "${primaryProvider!!::class.java.name} attempt $syncAttempts/$maxAttempts")
         primaryProvider!!.setup()
         val users = primaryProvider!!.getUsers()
-        if(users == null) {
-            Log.w(javaClass, "External provider: ${primaryProvider?.getName()} returned null, perhaps it's not connected yet?")
-            syncing = false
-            return
-        }
+//        if(users == null) {
+//            Log.w(javaClass, "External provider: ${primaryProvider?.getName()} returned null, perhaps it's not connected yet?")
+//            syncing = false
+//            return
+//        }
         Log.i(javaClass, "External provider: ${primaryProvider?.getName()} found ${users.size} users")
         // Load groups
         val groups = primaryProvider!!.getGroups()
