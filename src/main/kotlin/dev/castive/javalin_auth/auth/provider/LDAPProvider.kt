@@ -37,11 +37,10 @@ class LDAPProvider(private val config: LDAPConfig,
 
 	private val userCache = arrayListOf<User>()
 
-	var connected = false
-		private set
+	private var connected = false
 
 	override fun setup() = try {
-		connection = LDAPConnection(config)
+		connection = LDAPConnection(config, configExtras.reconnectOnAuth)
 		connected = connection.connected
 		Log.i(javaClass, "LDAP connected: $connected")
 	}
