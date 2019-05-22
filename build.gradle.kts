@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.castive"
-version = "0.2.1"
+version = "0.2.2"
 
 repositories {
 	maven(url = "https://jitpack.io")
@@ -21,7 +21,11 @@ dependencies {
 	implementation("io.javalin:javalin:2.8.0")
 	implementation("org.slf4j:slf4j-simple:1.7.25")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
+	
 	implementation("com.auth0:java-jwt:3.7.0")
+	implementation("com.auth0:jwks-rsa:0.8.1")
+
+	implementation("com.microsoft.graph:microsoft-graph:1.3.0")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.2.0")
