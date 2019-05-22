@@ -40,7 +40,7 @@ class LDAPProvider(private val config: LDAPConfig,
 	private var connected = false
 
 	override fun setup() = try {
-		connection = LDAPConnection(config, configExtras.reconnectOnAuth)
+		connection = LDAPConnection(config, reconnectOnLogin = configExtras.reconnectOnAuth)
 		connected = connection.connected
 		Log.i(javaClass, "LDAP connected: $connected")
 	}
