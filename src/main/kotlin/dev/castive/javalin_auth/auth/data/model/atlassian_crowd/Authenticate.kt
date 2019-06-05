@@ -12,21 +12,15 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.provider
+package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+data class AuthenticateRequest(val username: String, val password: String)
+data class AuthenticateResponse(val expand: String, val token: String, val user: User, val link: Link, val `created-date`: Long, val `expiry-date`: Long)
 
-interface BaseProvider {
-	fun setup()
-	fun tearDown()
-	fun getUsers(): ArrayList<User>
-	fun getGroups(): ArrayList<Group>
-	fun userInGroup(group: Group, user: User): Boolean
-	fun getLogin(uid: String, password: String): String?
-	fun getName(): String
-	fun connected(): Boolean
-	fun validate(token: String, data: Any): Boolean
-}
+data class User(val name: String)
+data class Link(val href: String, val rel: String)
+
+data class BasicAuthentication(val username: String, val password: String)

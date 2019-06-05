@@ -103,4 +103,6 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 	override fun connected(): Boolean {
 		return true
 	}
+
+	override fun validate(token: String, data: Any) = true
 }

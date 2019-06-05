@@ -1,0 +1,9 @@
+version: '3'
+services:
+  crowd:
+    image: dchevell/crowd:3.4.5-alpine
+    container_name: crowd
+    volumes:
+      - ./crowd:/var/atlassian/application-data/crowd
+    ports:
+      - 8095:8095

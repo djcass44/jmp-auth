@@ -12,21 +12,14 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.provider
+package dev.castive.javalin_auth.util
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+import org.apache.commons.codec.binary.Base64
+import java.nio.charset.StandardCharsets
 
-interface BaseProvider {
-	fun setup()
-	fun tearDown()
-	fun getUsers(): ArrayList<User>
-	fun getGroups(): ArrayList<Group>
-	fun userInGroup(group: Group, user: User): Boolean
-	fun getLogin(uid: String, password: String): String?
-	fun getName(): String
-	fun connected(): Boolean
-	fun validate(token: String, data: Any): Boolean
+object Util {
+	fun basicAuth(username: String, password: String) = "Basic ${Base64.encodeBase64URLSafeString("$username:$password".toByteArray(StandardCharsets.UTF_8))}"
 }

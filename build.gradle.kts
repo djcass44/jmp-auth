@@ -9,8 +9,9 @@ group = "dev.castive"
 version = "0.2.2"
 
 repositories {
-	maven(url = "https://jitpack.io")
+	mavenCentral()
 	jcenter()
+	maven(url = "https://jitpack.io")
 }
 
 dependencies {
@@ -27,13 +28,18 @@ dependencies {
 
 	implementation("com.microsoft.graph:microsoft-graph:1.3.0")
 
+	// Networking
+	implementation("com.github.kittinunf.fuel:fuel:2.1.0")
+	implementation("com.github.kittinunf.fuel:fuel-coroutines:2.1.0")
+	implementation("com.github.kittinunf.fuel:fuel-gson:2.1.0")
+
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.2.0")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 }
 
 tasks.withType<KotlinCompile>().all {
-	kotlinOptions.jvmTarget = "1.8"
+	kotlinOptions.jvmTarget = "11"
 }
 tasks.withType<Test> {
 	useJUnitPlatform()

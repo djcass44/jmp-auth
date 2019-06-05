@@ -152,4 +152,6 @@ class LDAPProvider(private val config: LDAPConfig,
 	override fun connected(): Boolean {
 		return connection.connected
 	}
+
+	override fun validate(token: String, data: Any) = true
 }
