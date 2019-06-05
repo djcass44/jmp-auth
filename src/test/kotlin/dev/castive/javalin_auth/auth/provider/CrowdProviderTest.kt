@@ -18,9 +18,13 @@
 package dev.castive.javalin_auth.auth.provider
 
 import dev.castive.javalin_auth.auth.connect.CrowdConfig
+import dev.castive.javalin_auth.auth.data.Group
+import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.Factor
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.ValidateRequest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class CrowdProviderTest {
@@ -30,19 +34,43 @@ class CrowdProviderTest {
 		serviceAccount = BasicAuthentication("SVC_Crowd", "crowd")
 	)
 
+	private val provider = CrowdProvider(config)
+
+	@BeforeEach
+	internal fun setUp() {
+		provider.setup()
+	}
+
+	@AfterEach
+	internal fun tearDown() {
+		provider.tearDown()
+	}
+
 	@Test
 	fun tryLogin() {
-		val provider = CrowdProvider(config)
-		provider.setup()
 		val token = provider.getLogin("django", "djangodjango")!!
 		// Disable "Require consistent client IP address" in Crowd for this to pass
 		assert(provider.validate(token, ValidateRequest(arrayOf(Factor("remote_address", "127.0.0.1")))))
 	}
 	@Test
 	fun failLogin() {
-		val provider = CrowdProvider(config)
-		provider.setup()
 		val token = provider.getLogin("django", "djangodjangodjango")
 		assert(token == null)
+	}
+	@Test
+	fun loadGroups() {
+		val groups = provider.getGroups()
+		assert(groups.size > 0)
+	}
+	@Test
+	fun loadUsers() {
+		val users = provider.getUsers()
+		assert(users.size > 0)
+	}
+	@Test
+	fun checkUserInGroup() {
+		val user = User("tony.stark", "", "", CrowdProvider.SOURCE_NAME)
+		val group = Group("JMP Users", "", CrowdProvider.SOURCE_NAME)
+		assert(provider.userInGroup(group, user))
 	}
 }

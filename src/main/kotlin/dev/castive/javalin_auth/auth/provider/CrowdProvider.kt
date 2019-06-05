@@ -29,6 +29,8 @@ import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateRequest
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateResponse
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.GroupSearch
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.UserSearch
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
 
@@ -49,15 +51,61 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun tearDown() {
-		TODO("not implemented")
+
 	}
 
+	// Get all the users we can
+	// Currently only supports the 1st 1000 groups
 	override fun getUsers(): ArrayList<User> {
-		TODO("not implemented")
+		val users = arrayListOf<User>()
+		val params = listOf(
+			Pair("entity-type", "user")
+		)
+		val r = FuelManager.instance.get("/rest/usermanagement/1/search", params)
+			.responseObject { _: Request, _: Response, result: Result<UserSearch, FuelError> ->
+				when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to load groups, ${result.getException().exception}")
+					}
+					is Result.Success -> {
+						val data = result.get()
+						data.users.forEach {
+							Log.v(javaClass, "Found $SOURCE_NAME users: ${it.name}")
+							users.add(User(it.name, it.name, "", SOURCE_NAME))
+						}
+						Log.i(javaClass, "Loaded ${users.size} user from $SOURCE_NAME")
+					}
+				}
+			}
+		r.join()
+		return users
 	}
 
+	// Get all the groups we can
+	// Currently only supports the 1st 1000 groups
 	override fun getGroups(): ArrayList<Group> {
-		TODO("not implemented")
+		val groups = arrayListOf<Group>()
+		val params = listOf(
+			Pair("entity-type", "group")
+		)
+		val r = FuelManager.instance.get("/rest/usermanagement/1/search", params)
+			.responseObject { _: Request, _: Response, result: Result<GroupSearch, FuelError> ->
+				when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to load groups, ${result.getException().exception}")
+					}
+					is Result.Success -> {
+						val data = result.get()
+						data.groups.forEach {
+							Log.v(javaClass, "Found $SOURCE_NAME group: ${it.name}")
+							groups.add(Group(it.name, it.name, SOURCE_NAME))
+						}
+						Log.i(javaClass, "Loaded ${groups.size} groups from $SOURCE_NAME")
+					}
+				}
+			}
+		r.join()
+		return groups
 	}
 
 	override fun userInGroup(group: Group, user: User): Boolean {
@@ -76,7 +124,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 					}
 					is Result.Success -> {
 						val data = result.get()
-						Log.ok(javaClass, "Crowd created a new session for ${data.user.name}")
+						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${data.user.name}")
 						Log.d(javaClass, "Created session with token: ${data.token}")
 						data.token
 					}
