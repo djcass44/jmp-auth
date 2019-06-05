@@ -24,24 +24,24 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.result.Result
 import com.google.gson.GsonBuilder
+import dev.castive.javalin_auth.auth.connect.CrowdConfig
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateRequest
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateResponse
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
 
-class CrowdProvider(private val crowdUrl: String, private val appAuth: BasicAuthentication): BaseProvider {
+class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	companion object {
 		const val SOURCE_NAME = "Crowd"
 	}
 	private val gson = GsonBuilder().setPrettyPrinting().create()
 	override fun setup() {
 		FuelManager.instance.apply {
-			basePath = crowdUrl
+			basePath = config.crowdUrl
 			baseHeaders = mapOf(
-				Pair("Authorization", Util.basicAuth(appAuth.username, appAuth.password)),
+				Pair("Authorization", Util.basicAuth(config.appAuth.username, config.appAuth.password)),
 				Pair("Content-Type", "application/json"),
 				Pair("Accept", "application/json")
 			)

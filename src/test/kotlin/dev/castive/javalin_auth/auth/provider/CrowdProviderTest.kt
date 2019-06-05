@@ -17,15 +17,22 @@
 
 package dev.castive.javalin_auth.auth.provider
 
+import dev.castive.javalin_auth.auth.connect.CrowdConfig
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.Factor
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.ValidateRequest
 import org.junit.jupiter.api.Test
 
 class CrowdProviderTest {
+	private val config = CrowdConfig(
+		crowdUrl = "http://localhost:8095/crowd",
+		appAuth = BasicAuthentication("jmp", "password"),
+		serviceAccount = BasicAuthentication("SVC_Crowd", "crowd")
+	)
+
 	@Test
 	fun tryLogin() {
-		val provider = CrowdProvider("http://localhost:8095/crowd", BasicAuthentication("jmp", "password"))
+		val provider = CrowdProvider(config)
 		provider.setup()
 		val token = provider.getLogin("django", "djangodjango")!!
 		// Disable "Require consistent client IP address" in Crowd for this to pass
@@ -33,7 +40,7 @@ class CrowdProviderTest {
 	}
 	@Test
 	fun failLogin() {
-		val provider = CrowdProvider("http://localhost:8095/crowd", BasicAuthentication("jmp", "password"))
+		val provider = CrowdProvider(config)
 		provider.setup()
 		val token = provider.getLogin("django", "djangodjangodjango")
 		assert(token == null)
