@@ -27,10 +27,7 @@ import com.google.gson.GsonBuilder
 import dev.castive.javalin_auth.auth.connect.CrowdConfig
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateRequest
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.AuthenticateResponse
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.GroupSearch
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.UserSearch
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.*
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
 
@@ -109,7 +106,28 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun userInGroup(group: Group, user: User): Boolean {
-		TODO("not implemented")
+		var res = false
+		val params = listOf(
+			Pair("username", user.username),
+			Pair("groupname", group.name)
+		)
+		val r = FuelManager.instance.get("/rest/usermanagement/1/user/group/direct", params)
+			.responseObject { _: Request, _: Response, result: Result<Groups, FuelError> ->
+				when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to check membership, or the user isn't a member, ${result.getException().exception}")
+						res = false
+					}
+					is Result.Success -> {
+						val data = result.get()
+						Log.d(javaClass, data.toString())
+						res = data.name == group.name
+						Log.i(javaClass, "${user.username} in ${group.name}: $res")
+					}
+				}
+			}
+		r.join()
+		return res
 	}
 
 	override fun getLogin(uid: String, password: String): String? {
@@ -139,7 +157,14 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun connected(): Boolean {
-		TODO("not implemented")
+		var res = false
+		val r = FuelManager.instance.post("/")
+			.responseString { it ->
+				Log.d(javaClass, "Crowd connection status: $it")
+				res = it.get().isNotBlank()
+			}
+		r.join()
+		return res
 	}
 
 	override fun validate(token: String, data: Any): Boolean {

@@ -73,4 +73,14 @@ class CrowdProviderTest {
 		val group = Group("JMP Users", "", CrowdProvider.SOURCE_NAME)
 		assert(provider.userInGroup(group, user))
 	}
+	@Test
+	fun checkUserNotInGroup() {
+		val user = User("tony.stark", "", "", CrowdProvider.SOURCE_NAME)
+		val group = Group("crowd-administrators", "", CrowdProvider.SOURCE_NAME)
+		assert(!provider.userInGroup(group, user))
+	}
+	@Test
+	fun checkCrowdConnected() {
+		assert(provider.connected())
+	}
 }
