@@ -29,10 +29,10 @@ import org.junit.jupiter.api.Test
 
 class LDAPProviderTest {
 	private val ldapConfig = LDAPConfig( "172.19.0.2", 389, "ou=TestUnit,dc=example,dc=org")
-	private val ldapExtras = LDAPConfig.Extras("(objectClass=inetOrgPerson)", "uid", true, blockLocal = true, reconnectOnAuth = false)
+	private val ldapExtras = LDAPConfig.Extras("(objectClass=inetOrgPerson)", "uid", reconnectOnAuth = false)
 	private val ldapGroups = LDAPConfig.Groups("(objectClass=groupOfNames)", "member", "cn")
 	private val provider = LDAPProvider(
-		LDAPConfig2(true, BasicAuthentication("cn-admin,dc=example,dc=org", "admin"), 300000, 5, ldapConfig, ldapExtras, ldapGroups),
+		LDAPConfig2(true, BasicAuthentication("cn-admin,dc=example,dc=org", "admin"), 300000, 5, true, true, ldapConfig, ldapExtras, ldapGroups),
 		null
 	)
 

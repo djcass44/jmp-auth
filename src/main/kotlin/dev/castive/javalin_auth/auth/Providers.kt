@@ -25,13 +25,12 @@ import dev.castive.log2.Log
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-class Providers(private val config: BaseConfig, private val provider: BaseProvider) {
+class Providers(private val config: BaseConfig, private val provider: BaseProvider?) {
 	companion object {
 		lateinit var internalProvider: InternalProvider
 		var primaryProvider: BaseProvider? = null
 
 		lateinit var validator: UserIngress
-		lateinit var verification: UserVerification
 	}
 
 	private var syncAttempts = 0
@@ -40,7 +39,6 @@ class Providers(private val config: BaseConfig, private val provider: BaseProvid
 	private var syncing = false
 
 	fun init(verification: UserVerification) {
-		Providers.verification = verification
 		internalProvider = InternalProvider(verification)
 		primaryProvider = provider
 		if(config.enabled) {

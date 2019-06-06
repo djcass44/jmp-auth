@@ -24,4 +24,6 @@ interface BaseConfig {
 	val serviceAccount: BasicAuthentication
 	val syncRate: Long
 	val maxConnectAttempts: Int
+	val blockLocal: Boolean
+	val removeStale: Boolean
 }

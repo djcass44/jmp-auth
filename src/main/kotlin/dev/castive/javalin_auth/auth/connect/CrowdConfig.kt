@@ -21,5 +21,9 @@ import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthenticat
 
 data class CrowdConfig(override val enabled: Boolean, override val serviceAccount: BasicAuthentication, val crowdUrl: String,
                        override val syncRate: Long = 300000,
-                       override val maxConnectAttempts: Int = 5
-) : BaseConfig
+                       override val maxConnectAttempts: Int = 5,
+                       override val blockLocal: Boolean = false,
+                       override val removeStale: Boolean = true
+) : BaseConfig {
+    constructor(min: MinimalConfig, crowdUrl: String): this(min.enabled, min.serviceAccount, crowdUrl, min.syncRate, min.maxConnectAttempts, min.blockLocal, min.removeStale)
+}

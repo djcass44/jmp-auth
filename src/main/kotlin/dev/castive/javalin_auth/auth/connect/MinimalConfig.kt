@@ -23,5 +23,7 @@ class MinimalConfig(
 	override val enabled: Boolean,
 	override val serviceAccount: BasicAuthentication,
 	override val syncRate: Long = 300000,
-	override val maxConnectAttempts: Int = 5
+	override val maxConnectAttempts: Int = 5,
+	override val blockLocal: Boolean = false,
+	override val removeStale: Boolean = true
 ) : BaseConfig

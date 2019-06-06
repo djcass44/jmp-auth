@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.castive"
-version = "0.2.2"
+version = "0.3.3"
 
 repositories {
 	mavenCentral()
