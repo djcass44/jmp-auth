@@ -16,17 +16,16 @@
 
 package dev.castive.javalin_auth.auth
 
-import dev.castive.javalin_auth.auth.connect.LDAPConfig
+import dev.castive.javalin_auth.auth.connect.BaseConfig
 import dev.castive.javalin_auth.auth.external.UserIngress
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.javalin_auth.auth.provider.BaseProvider
 import dev.castive.javalin_auth.auth.provider.InternalProvider
-import dev.castive.javalin_auth.auth.provider.LDAPProvider
 import dev.castive.log2.Log
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras: LDAPConfig.Extras, private val ldapConfigGroups: LDAPConfig.Groups) {
+class Providers(private val config: BaseConfig, private val provider: BaseProvider) {
 	companion object {
 		lateinit var internalProvider: InternalProvider
 		var primaryProvider: BaseProvider? = null
@@ -43,21 +42,14 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
 	fun init(verification: UserVerification) {
 		Providers.verification = verification
 		internalProvider = InternalProvider(verification)
-		initLDAP()
-	}
-
-	/**
-	 * Try to setup LDAP provider if it's enabled
-	 */
-	private fun initLDAP() {
-		if(ldapConfig.enabled) {
-			primaryProvider = LDAPProvider(ldapConfig, ldapConfigExtras, ldapConfigGroups, verification)
+		primaryProvider = provider
+		if(config.enabled) {
 			startCRON()
 		}
 	}
 
 	private fun startCRON() {
-		syncTimer = fixedRateTimer(javaClass.name, true, 0, ldapConfigExtras.syncRate) {
+		syncTimer = fixedRateTimer(javaClass.name, true, 0, config.syncRate) {
 			if(!syncing)
 				sync()
 			else Log.e(javaClass, "Unable to run CRON sync [reason: sync already running]")
@@ -74,9 +66,9 @@ class Providers(private val ldapConfig: LDAPConfig, private val ldapConfigExtras
 
 	private fun sync() {
 		syncing = true
-		val maxAttempts = ldapConfigExtras.maxConnectAttempts
+		val maxAttempts = config.maxConnectAttempts
 		if(syncAttempts >= maxAttempts) { // Give up if we fail more than 5 times (default 25 minutes)
-			Log.f(javaClass, "Reached maximum failure rate for LDAP sync, giving up")
+			Log.f(javaClass, "Reached maximum failure rate for provider sync, giving up")
 			syncTimer.cancel()
 			syncing = false
 			return

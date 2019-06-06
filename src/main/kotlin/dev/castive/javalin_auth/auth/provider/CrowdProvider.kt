@@ -40,7 +40,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		FuelManager.instance.apply {
 			basePath = config.crowdUrl
 			baseHeaders = mapOf(
-				Pair("Authorization", Util.basicAuth(config.appAuth.username, config.appAuth.password)),
+				Pair("Authorization", Util.basicAuth(config.serviceAccount.username, config.serviceAccount.password)),
 				Pair("Content-Type", "application/json"),
 				Pair("Accept", "application/json")
 			)

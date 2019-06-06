@@ -18,21 +18,21 @@
 package dev.castive.javalin_auth.auth.provider
 
 import dev.castive.javalin_auth.auth.connect.LDAPConfig
+import dev.castive.javalin_auth.auth.connect.LDAPConfig2
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 import dev.castive.log2.Log
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class LDAPProviderTest {
-	private val ldapConfig = LDAPConfig(true, "172.19.0.2", 389, "ou=TestUnit,dc=example,dc=org", "cn=admin,dc=example,dc=org", "admin")
-	private val ldapExtras = LDAPConfig.Extras("(objectClass=inetOrgPerson)", "uid", true, 300000, true, 5)
+	private val ldapConfig = LDAPConfig( "172.19.0.2", 389, "ou=TestUnit,dc=example,dc=org")
+	private val ldapExtras = LDAPConfig.Extras("(objectClass=inetOrgPerson)", "uid", true, blockLocal = true, reconnectOnAuth = false)
 	private val ldapGroups = LDAPConfig.Groups("(objectClass=groupOfNames)", "member", "cn")
 	private val provider = LDAPProvider(
-		ldapConfig,
-		ldapExtras,
-		ldapGroups,
+		LDAPConfig2(true, BasicAuthentication("cn-admin,dc=example,dc=org", "admin"), 300000, 5, ldapConfig, ldapExtras, ldapGroups),
 		null
 	)
 

@@ -30,8 +30,8 @@ import org.junit.jupiter.api.Test
 class CrowdProviderTest {
 	private val config = CrowdConfig(
 		crowdUrl = "http://localhost:8095/crowd",
-		appAuth = BasicAuthentication("jmp", "password"),
-		serviceAccount = BasicAuthentication("SVC_Crowd", "crowd")
+		serviceAccount = BasicAuthentication("jmp", "password"),
+		enabled = true
 	)
 
 	private val provider = CrowdProvider(config)

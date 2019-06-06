@@ -16,20 +16,25 @@
 
 package dev.castive.javalin_auth.auth.connect
 
-class LDAPConfig(val enabled: Boolean,
-                 val server: String,
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
+
+class LDAPConfig(val server: String,
                  val port: Int = 389,
-                 val contextDN: String,
-                 val serviceUserDN: String,
-                 val serviceUserPassword: String) {
+                 val contextDN: String) {
 	class Extras(val userFilter: String,
 	             val uid: String,
 	             val removeStale: Boolean = true,
-	             val syncRate: Long = 300000,
 	             val blockLocal: Boolean = false,
-	             val maxConnectAttempts: Int = 5,
 				 val reconnectOnAuth: Boolean = false)
 	class Groups(val groupFilter: String,
 	             val groupQuery: String,
 	             val gid: String)
 }
+class LDAPConfig2(override val enabled: Boolean,
+                  override val serviceAccount: BasicAuthentication,
+                  override val syncRate: Long = 300000,
+                  override val maxConnectAttempts: Int = 5,
+                  val baseConfig: LDAPConfig,
+                  val extraConfig: LDAPConfig.Extras,
+                  val groupConfig: LDAPConfig.Groups
+) : BaseConfig

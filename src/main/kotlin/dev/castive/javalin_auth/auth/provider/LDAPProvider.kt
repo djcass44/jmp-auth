@@ -16,7 +16,7 @@
 
 package dev.castive.javalin_auth.auth.provider
 
-import dev.castive.javalin_auth.auth.connect.LDAPConfig
+import dev.castive.javalin_auth.auth.connect.LDAPConfig2
 import dev.castive.javalin_auth.auth.connect.LDAPConnection
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
@@ -26,9 +26,7 @@ import java.util.*
 import javax.naming.AuthenticationException
 import javax.naming.NamingException
 
-class LDAPProvider(private val config: LDAPConfig,
-                          private val configExtras: LDAPConfig.Extras,
-                          private val configGroups: LDAPConfig.Groups,
+class LDAPProvider(private val config: LDAPConfig2,
                           private val verification: UserVerification?): BaseProvider {
 	companion object {
 		const val SOURCE_NAME = "ldap"
@@ -40,7 +38,7 @@ class LDAPProvider(private val config: LDAPConfig,
 	private var connected = false
 
 	override fun setup() = try {
-		connection = LDAPConnection(config, reconnectOnLogin = configExtras.reconnectOnAuth)
+		connection = LDAPConnection(config.baseConfig, reconnectOnLogin = config.extraConfig.reconnectOnAuth, serviceAccount = config.serviceAccount)
 		connected = connection.connected
 		Log.i(javaClass, "LDAP connected: $connected")
 	}
@@ -59,10 +57,10 @@ class LDAPProvider(private val config: LDAPConfig,
 
 	override fun getUsers(): ArrayList<User> {
 		userCache.clear()
-		val result = connection.searchFilter(configExtras.userFilter) ?: return arrayListOf()
+		val result = connection.searchFilter(config.extraConfig.userFilter) ?: return arrayListOf()
 		for (r in result) {
 			Log.d(javaClass, r.attributes.toString())
-			val username = kotlin.runCatching { r.attributes.get(configExtras.uid).get(0).toString() }.getOrNull()
+			val username = kotlin.runCatching { r.attributes.get(config.extraConfig.uid).get(0).toString() }.getOrNull()
 			if(username == null) {
 				Log.e(javaClass, "Failed to read name of user, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
 				continue
@@ -88,10 +86,10 @@ class LDAPProvider(private val config: LDAPConfig,
 	override fun getGroups(): ArrayList<Group> {
 		if(userCache.isEmpty()) getUsers()
 		val groups = arrayListOf<Group>()
-		val result = connection.searchFilter(configGroups.groupFilter) ?: return groups
+		val result = connection.searchFilter(config.groupConfig.groupFilter) ?: return groups
 		for (r in result) {
 			Log.d(javaClass, r.attributes.toString())
-			val name = kotlin.runCatching { r.attributes.get(configGroups.gid).get(0).toString() }.getOrNull()
+			val name = kotlin.runCatching { r.attributes.get(config.groupConfig.gid).get(0).toString() }.getOrNull()
 			if(name == null) {
 				Log.e(javaClass, "Failed to read name of group, dumping attributes for manual fix: ${runCatching { return@runCatching r.attributes }}")
 				continue
@@ -114,7 +112,7 @@ class LDAPProvider(private val config: LDAPConfig,
 	}
 
 	override fun userInGroup(group: Group, user: User): Boolean {
-		val filter = "(&${configGroups.groupFilter}(${configGroups.groupQuery}=${user.dn}))"
+		val filter = "(&${config.groupConfig.groupFilter}(${config.groupConfig.groupQuery}=${user.dn}))"
 		Log.d(javaClass, "Using filter: $filter")
 		val res = connection.searchFilter(filter) ?: run {
 			Log.d(javaClass, "Search returned null")
@@ -140,7 +138,7 @@ class LDAPProvider(private val config: LDAPConfig,
 	}
 
 	override fun getLogin(uid: String, password: String): String? {
-		val valid = connection.checkUserAuth(uid, password, configExtras.uid)
+		val valid = connection.checkUserAuth(uid, password, config.extraConfig.uid)
 		return if (valid) verification?.getToken(uid)
 		else null
 	}

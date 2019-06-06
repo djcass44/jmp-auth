@@ -19,7 +19,9 @@ package dev.castive.javalin_auth.auth.connect
 
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 
-data class CrowdConfig(override val enabled: Boolean, override val serviceAccount: BasicAuthentication, val crowdUrl: String,
-                       override val syncRate: Long = 300000,
-                       override val maxConnectAttempts: Int = 5
-) : BaseConfig
+interface BaseConfig {
+	val enabled: Boolean
+	val serviceAccount: BasicAuthentication
+	val syncRate: Long
+	val maxConnectAttempts: Int
+}
