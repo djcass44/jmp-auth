@@ -32,11 +32,13 @@ object UserAction {
     fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim {
         val jwt = JWT.map(ctx) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
+            Log.i(javaClass, "Failed to parse JWT")
             throw ForbiddenResponse("Token verification failed")
         }
         Log.ok(javaClass, "JWT parse valid")
         return if(lax) TokenProvider.verifyLax(jwt, verification)!! else TokenProvider.verify(jwt, verification) ?: run {
             ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
+            Log.i(javaClass, "Token verification failed")
             throw ForbiddenResponse("Token verification failed")
         }
     }
