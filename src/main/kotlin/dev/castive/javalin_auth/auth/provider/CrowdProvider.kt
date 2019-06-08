@@ -36,6 +36,8 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		const val SOURCE_NAME = "Crowd"
 	}
 	private val gson = GsonBuilder().setPrettyPrinting().create()
+	private val userCache = arrayListOf<User>()
+
 	override fun setup() {
 		FuelManager.instance.apply {
 			basePath = config.crowdUrl
@@ -54,7 +56,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	// Get all the users we can
 	// Currently only supports the 1st 1000 groups
 	override fun getUsers(): ArrayList<User> {
-		val users = arrayListOf<User>()
+		userCache.clear()
 		val params = listOf(
 			Pair("entity-type", "user")
 		)
@@ -68,19 +70,20 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						val data = result.get()
 						data.users.forEach {
 							Log.v(javaClass, "Found $SOURCE_NAME users: ${it.name}")
-							users.add(User(it.name, it.name, "", SOURCE_NAME))
+							userCache.add(User(it.name, it.name, "", SOURCE_NAME))
 						}
-						Log.i(javaClass, "Loaded ${users.size} user from $SOURCE_NAME")
+						Log.i(javaClass, "Loaded ${userCache.size} user from $SOURCE_NAME")
 					}
 				}
 			}
 		r.join()
-		return users
+		return userCache
 	}
 
 	// Get all the groups we can
 	// Currently only supports the 1st 1000 groups
 	override fun getGroups(): ArrayList<Group> {
+		if(userCache.size == 0) getUsers()
 		val groups = arrayListOf<Group>()
 		val params = listOf(
 			Pair("entity-type", "group")
@@ -95,7 +98,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						val data = result.get()
 						data.groups.forEach {
 							Log.v(javaClass, "Found $SOURCE_NAME group: ${it.name}")
-							groups.add(Group(it.name, it.name, SOURCE_NAME))
+							groups.add(addGroupUsers(Group(it.name, it.name, SOURCE_NAME)))
 						}
 						Log.i(javaClass, "Loaded ${groups.size} groups from $SOURCE_NAME")
 					}
@@ -103,6 +106,15 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 			}
 		r.join()
 		return groups
+	}
+
+	// This is horrifically inefficient
+	private fun addGroupUsers(group: Group): Group {
+		val members = arrayListOf<User>()
+		userCache.forEach {
+			if(userInGroup(group, it)) members.add(it)
+		}
+		return Group(group.name, group.dn, members, group.source)
 	}
 
 	override fun userInGroup(group: Group, user: User): Boolean {
