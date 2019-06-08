@@ -210,16 +210,9 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun invalidateLogin(id: String) {
-		val r = FuelManager.instance.get("/rest/usermanagement/1/config/cookie")
-			.responseObject { _: Request, _: Response, result: Result<CrowdCookieConfig, FuelError> ->
-				when(result) {
-					is Result.Failure -> {
-						Log.e(javaClass, "Failed to get cookie config:, ${result.getException().exception}")
-					}
-					is Result.Success -> {
-						Log.a(javaClass, "Invalidated token: $id")
-					}
-				}
+		val r = FuelManager.instance.delete("/rest/usermanagement/1/session/${id}")
+			.responseString { it ->
+				Log.i(javaClass, "Invalidated token: $id, response: ${it.get()}")
 			}
 		r.join()
 	}
