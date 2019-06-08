@@ -154,4 +154,6 @@ class LDAPProvider(private val config: LDAPConfig2,
 	override fun validate(token: String, data: Any) = true
 
 	override fun getSSOConfig(): Any? = null
+
+	override fun invalidateLogin(id: String) {}
 }

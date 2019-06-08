@@ -30,4 +30,5 @@ interface BaseProvider {
 	fun connected(): Boolean
 	fun validate(token: String, data: Any): Boolean
 	fun getSSOConfig(): Any?
+	fun invalidateLogin(id: String)
 }
