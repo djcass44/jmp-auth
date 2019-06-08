@@ -108,12 +108,30 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		return groups
 	}
 
-	// This is horrifically inefficient
+	// This can probably be improved
 	private fun addGroupUsers(group: Group): Group {
 		val members = arrayListOf<User>()
-		userCache.forEach {
-			if(userInGroup(group, it)) members.add(it)
-		}
+		val params = listOf(
+			Pair("groupname", group.name)
+		)
+		val r = FuelManager.instance.get("/rest/usermanagement/1/group/user/direct", params)
+			.responseObject { _: Request, _: Response, result: Result<UserSearch, FuelError> ->
+				when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to get direct members of group: ${group.name}, ${result.getException().exception}")
+					}
+					is Result.Success -> {
+						val data = result.get()
+						val names = arrayListOf<String>()
+						data.users.forEach {
+							names.add(it.name)
+						}
+						Log.d(javaClass, "Found ${data.users.size} users in group: ${group.name}")
+						userCache.forEach { if(names.contains(it.username)) members.add(it) }
+					}
+				}
+			}
+		r.join()
 		return Group(group.name, group.dn, members, group.source)
 	}
 
