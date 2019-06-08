@@ -57,4 +57,5 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 	}
 
 	override fun validate(token: String, data: Any) = true
+	override fun getSSOConfig(): Any? = null
 }

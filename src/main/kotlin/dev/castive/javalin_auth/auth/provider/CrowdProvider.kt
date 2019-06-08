@@ -144,7 +144,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						val data = result.get()
 						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${data.user.name}")
 						Log.d(javaClass, "Created session with token: ${data.token}")
-						data.token
+						gson.toJson(data)
 					}
 				}
 			}
@@ -182,6 +182,26 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						Log.ok(javaClass, "Validated SSO token for ${res.user.name}")
 						// Probably not needed, but just in case
 						(res.token == token)
+					}
+				}
+			}
+		r.join()
+		return response
+	}
+
+	override fun getSSOConfig(): Any? {
+		var response: Any? = null
+		val r = FuelManager.instance.get("/rest/usermanagement/1/config/cookie")
+			.responseObject { _: Request, _: Response, result: Result<CrowdCookieConfig, FuelError> ->
+				response = when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to get cookie config:, ${result.getException().exception}")
+						null
+					}
+					is Result.Success -> {
+						val res = result.get()
+						Log.ok(javaClass, "Got cookie config $res")
+						res
 					}
 				}
 			}

@@ -29,4 +29,5 @@ interface BaseProvider {
 	fun getName(): String
 	fun connected(): Boolean
 	fun validate(token: String, data: Any): Boolean
+	fun getSSOConfig(): Any?
 }
