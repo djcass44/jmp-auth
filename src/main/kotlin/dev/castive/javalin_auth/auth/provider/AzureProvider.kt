@@ -104,7 +104,7 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 		return true
 	}
 
-	override fun validate(token: String, data: Any) = true
+	override fun validate(token: String, data: Any): String? = "OK"
 
 	override fun getSSOConfig(): Any? = null
 

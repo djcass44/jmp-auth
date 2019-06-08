@@ -151,7 +151,7 @@ class LDAPProvider(private val config: LDAPConfig2,
 		return connection.connected
 	}
 
-	override fun validate(token: String, data: Any) = true
+	override fun validate(token: String, data: Any): String? = "OK"
 
 	override fun getSSOConfig(): Any? = null
 

@@ -167,21 +167,21 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		return res
 	}
 
-	override fun validate(token: String, data: Any): Boolean {
-		var response = false
+	override fun validate(token: String, data: Any): String? {
+		var response: String? = null
 		val r = FuelManager.instance.post("/rest/usermanagement/1/session/$token")
 			.body(gson.toJson(data))
 			.responseObject { _: Request, _: Response, result: Result<AuthenticateResponse, FuelError> ->
 				response = when(result) {
 					is Result.Failure -> {
 						Log.e(javaClass, "Failed to validate SSO token: $token, ${result.getException().exception}")
-						false
+						null
 					}
 					is Result.Success -> {
 						val res = result.get()
 						Log.ok(javaClass, "Validated SSO token for ${res.user.name}")
 						// Probably not needed, but just in case
-						(res.token == token)
+						gson.toJson(res)
 					}
 				}
 			}
