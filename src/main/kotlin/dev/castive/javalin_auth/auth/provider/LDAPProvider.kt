@@ -137,7 +137,7 @@ class LDAPProvider(private val config: LDAPConfig2,
 		return false
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
 		val valid = connection.checkUserAuth(uid, password, config.extraConfig.uid)
 		return if (valid) verification?.getToken(uid)
 		else null

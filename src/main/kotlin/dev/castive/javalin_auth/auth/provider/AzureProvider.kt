@@ -92,7 +92,7 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 

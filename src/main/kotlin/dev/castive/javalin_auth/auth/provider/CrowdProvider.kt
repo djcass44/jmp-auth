@@ -24,6 +24,7 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.result.Result
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import dev.castive.javalin_auth.auth.connect.CrowdConfig
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
@@ -160,10 +161,18 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		return res
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
+		val factors = if(data == null || data !is String) {
+			Log.w(javaClass, "Not sending validation factors, this may cause login issues")
+			null
+		}
+		else {
+			// This is very sketchy
+			gson.fromJson(data, object : TypeToken<List<Factor>>() {}.type)
+		}
 		var token: String? = null
 		val r = FuelManager.instance.post("/rest/usermanagement/1/session")
-			.body(gson.toJson(AuthenticateRequest(uid, password)))
+			.body(gson.toJson(AuthenticateRequest(uid, password, factors)))
 			.responseObject { _: Request, _: Response, result: Result<AuthenticateResponse, FuelError> ->
 				token = when(result) {
 					is Result.Failure -> {
@@ -171,10 +180,10 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						null
 					}
 					is Result.Success -> {
-						val data = result.get()
-						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${data.user.name}")
-						Log.d(javaClass, "Created session with token: ${data.token}")
-						gson.toJson(data)
+						val res = result.get()
+						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${res.user.name}")
+						Log.d(javaClass, "Created session with token: ${res.token}")
+						gson.toJson(res)
 					}
 				}
 			}
