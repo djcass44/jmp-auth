@@ -168,7 +168,8 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		}
 		else {
 			// This is very sketchy
-			gson.fromJson(data, object : TypeToken<List<Factor>>() {}.type)
+			Log.d(javaClass, "getLogin received data: $data")
+			ValidationFactors(gson.fromJson(data, object : TypeToken<List<Factor>>() {}.type))
 		}
 		var token: String? = null
 		val r = FuelManager.instance.post("/rest/usermanagement/1/session")

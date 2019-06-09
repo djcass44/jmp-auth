@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName
 data class AuthenticateRequest(val username: String,
                                val password: String,
                                @SerializedName("validation-factors")
-                               val validationFactors: ArrayList<Factor>? = null) {
+                               val validationFactors: ValidationFactors?) {
 }
 
 data class AuthenticateResponse(val expand: String,
@@ -36,5 +36,6 @@ data class AuthenticateResponse(val expand: String,
 
 data class User(val name: String)
 data class Link(val href: String, val rel: String)
+data class ValidationFactors(val validationFactors: ArrayList<Factor>)
 
 data class BasicAuthentication(val username: String, val password: String)
