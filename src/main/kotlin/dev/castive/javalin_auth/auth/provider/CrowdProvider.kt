@@ -197,14 +197,19 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun connected(): Boolean {
-		var res = false
-		val r = FuelManager.instance.post("/")
-			.responseString { it ->
-				Log.d(javaClass, "Crowd connection status: $it")
-				res = it.get().isNotBlank()
-			}
-		r.join()
-		return res
+		val config = runCatching { getSSOConfig() as CrowdCookieConfig }
+		val cf = config.getOrNull()
+		if(cf == null) {
+			Log.v(javaClass, "Crowd connection check returns null")
+			val err = config.exceptionOrNull()
+			if(err != null) Log.e(javaClass, "Crowd connection check failed from: $err")
+			return false
+		}
+		if(cf.name.isEmpty()) {
+			Log.v(javaClass, "Crowd connection check returns cookie with empty name")
+			return false
+		}
+		return true
 	}
 
 	override fun validate(token: String, data: Any): String? {

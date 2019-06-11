@@ -50,7 +50,7 @@ class CrowdProviderTest {
 	fun tryLogin() {
 		val token = provider.getLogin("django", "djangodjango")!!
 		// Disable "Require consistent client IP address" in Crowd for this to pass
-		assert(provider.validate(token, ValidateRequest(arrayOf(Factor("remote_address", "127.0.0.1")))))
+		assert(provider.validate(token, ValidateRequest(arrayOf(Factor("remote_address", "127.0.0.1")))) != null)
 	}
 	@Test
 	fun failLogin() {
