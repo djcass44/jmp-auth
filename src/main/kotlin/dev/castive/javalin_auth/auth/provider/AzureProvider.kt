@@ -92,7 +92,7 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 
@@ -104,5 +104,9 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 		return true
 	}
 
-	override fun validate(token: String, data: Any) = true
+	override fun validate(token: String, data: Any): String? = "OK"
+
+	override fun getSSOConfig(): Any? = null
+
+	override fun invalidateLogin(id: String) {}
 }

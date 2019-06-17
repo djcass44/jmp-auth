@@ -29,23 +29,17 @@ import io.javalin.ForbiddenResponse
 object UserAction {
     var verification: UserVerification? = null
 
-    fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim {
-        val jwt = JWT.map(ctx) ?: run {
-            ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
-            throw ForbiddenResponse("Token verification failed")
-        }
-        Log.ok(javaClass, "JWT parse valid")
-        return if(lax) TokenProvider.verifyLax(jwt, verification)!! else TokenProvider.verify(jwt, verification) ?: run {
-            ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
-            throw ForbiddenResponse("Token verification failed")
-        }
+    @Deprecated(message = "All will return null on failure", replaceWith = ReplaceWith("getOrNull(ctx, verification, lax)"))
+    fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
+        return getOrNull(ctx, verification, lax)
     }
-    fun get(ctx: Context, lax: Boolean = false): ValidUserClaim {
+    @Deprecated(message = "All will return null on failure", replaceWith = ReplaceWith("getOrNull(ctx, lax)"))
+    fun get(ctx: Context, lax: Boolean = false): ValidUserClaim? {
         if(verification == null) {
             Log.e(javaClass, "No UserVerification has been setup.")
             throw NullPointerException()
         }
-        return get(ctx, verification!!, lax)
+        return getOrNull(ctx, verification!!, lax)
     }
     fun getOrNull(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
         val jwt = JWT.map(ctx) ?: ""

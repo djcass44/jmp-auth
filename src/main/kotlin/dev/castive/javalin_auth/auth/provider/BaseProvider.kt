@@ -25,8 +25,10 @@ interface BaseProvider {
 	fun getUsers(): ArrayList<User>
 	fun getGroups(): ArrayList<Group>
 	fun userInGroup(group: Group, user: User): Boolean
-	fun getLogin(uid: String, password: String): String?
+	fun getLogin(uid: String, password: String, data: Any? = null): String?
 	fun getName(): String
 	fun connected(): Boolean
-	fun validate(token: String, data: Any): Boolean
+	fun validate(token: String, data: Any): String?
+	fun getSSOConfig(): Any?
+	fun invalidateLogin(id: String)
 }

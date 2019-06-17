@@ -24,6 +24,7 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.result.Result
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import dev.castive.javalin_auth.auth.connect.CrowdConfig
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
@@ -36,6 +37,8 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		const val SOURCE_NAME = "Crowd"
 	}
 	private val gson = GsonBuilder().setPrettyPrinting().create()
+	private val userCache = arrayListOf<User>()
+
 	override fun setup() {
 		FuelManager.instance.apply {
 			basePath = config.crowdUrl
@@ -54,7 +57,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	// Get all the users we can
 	// Currently only supports the 1st 1000 groups
 	override fun getUsers(): ArrayList<User> {
-		val users = arrayListOf<User>()
+		userCache.clear()
 		val params = listOf(
 			Pair("entity-type", "user")
 		)
@@ -68,19 +71,20 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						val data = result.get()
 						data.users.forEach {
 							Log.v(javaClass, "Found $SOURCE_NAME users: ${it.name}")
-							users.add(User(it.name, it.name, "", SOURCE_NAME))
+							userCache.add(User(it.name, it.name, "", SOURCE_NAME))
 						}
-						Log.i(javaClass, "Loaded ${users.size} user from $SOURCE_NAME")
+						Log.i(javaClass, "Loaded ${userCache.size} user from $SOURCE_NAME")
 					}
 				}
 			}
 		r.join()
-		return users
+		return userCache
 	}
 
 	// Get all the groups we can
 	// Currently only supports the 1st 1000 groups
 	override fun getGroups(): ArrayList<Group> {
+		if(userCache.size == 0) getUsers()
 		val groups = arrayListOf<Group>()
 		val params = listOf(
 			Pair("entity-type", "group")
@@ -95,7 +99,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						val data = result.get()
 						data.groups.forEach {
 							Log.v(javaClass, "Found $SOURCE_NAME group: ${it.name}")
-							groups.add(Group(it.name, it.name, SOURCE_NAME))
+							groups.add(addGroupUsers(Group(it.name, it.name, SOURCE_NAME)))
 						}
 						Log.i(javaClass, "Loaded ${groups.size} groups from $SOURCE_NAME")
 					}
@@ -103,6 +107,33 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 			}
 		r.join()
 		return groups
+	}
+
+	// This can probably be improved
+	private fun addGroupUsers(group: Group): Group {
+		val members = arrayListOf<User>()
+		val params = listOf(
+			Pair("groupname", group.name)
+		)
+		val r = FuelManager.instance.get("/rest/usermanagement/1/group/user/direct", params)
+			.responseObject { _: Request, _: Response, result: Result<UserSearch, FuelError> ->
+				when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to get direct members of group: ${group.name}, ${result.getException().exception}")
+					}
+					is Result.Success -> {
+						val data = result.get()
+						val names = arrayListOf<String>()
+						data.users.forEach {
+							names.add(it.name)
+						}
+						Log.d(javaClass, "Found ${data.users.size} users in group: ${group.name}")
+						userCache.forEach { if(names.contains(it.username)) members.add(it) }
+					}
+				}
+			}
+		r.join()
+		return Group(group.name, group.dn, members, group.source)
 	}
 
 	override fun userInGroup(group: Group, user: User): Boolean {
@@ -130,10 +161,19 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		return res
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
+		val factors = if(data == null || data !is String) {
+			Log.w(javaClass, "Not sending validation factors, this may cause login issues")
+			null
+		}
+		else {
+			// This is very sketchy
+			Log.d(javaClass, "getLogin received data: $data")
+			ValidationFactors(gson.fromJson(data, object : TypeToken<List<Factor>>() {}.type))
+		}
 		var token: String? = null
 		val r = FuelManager.instance.post("/rest/usermanagement/1/session")
-			.body(gson.toJson(AuthenticateRequest(uid, password)))
+			.body(gson.toJson(AuthenticateRequest(uid, password, factors)))
 			.responseObject { _: Request, _: Response, result: Result<AuthenticateResponse, FuelError> ->
 				token = when(result) {
 					is Result.Failure -> {
@@ -141,10 +181,10 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 						null
 					}
 					is Result.Success -> {
-						val data = result.get()
-						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${data.user.name}")
-						Log.d(javaClass, "Created session with token: ${data.token}")
-						data.token
+						val res = result.get()
+						Log.ok(javaClass, "$SOURCE_NAME created a new session for ${res.user.name}")
+						Log.d(javaClass, "Created session with token: ${res.token}")
+						gson.toJson(res)
 					}
 				}
 			}
@@ -157,35 +197,68 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun connected(): Boolean {
-		var res = false
-		val r = FuelManager.instance.post("/")
-			.responseString { it ->
-				Log.d(javaClass, "Crowd connection status: $it")
-				res = it.get().isNotBlank()
-			}
-		r.join()
-		return res
+		val config = runCatching { getSSOConfig() as CrowdCookieConfig }
+		val cf = config.getOrNull()
+		if(cf == null) {
+			Log.v(javaClass, "Crowd connection check returns null")
+			val err = config.exceptionOrNull()
+			if(err != null) Log.e(javaClass, "Crowd connection check failed from: $err")
+			return false
+		}
+		if(cf.name.isEmpty()) {
+			Log.v(javaClass, "Crowd connection check returns cookie with empty name")
+			return false
+		}
+		return true
 	}
 
-	override fun validate(token: String, data: Any): Boolean {
-		var response = false
+	override fun validate(token: String, data: Any): String? {
+		var response: String? = null
 		val r = FuelManager.instance.post("/rest/usermanagement/1/session/$token")
 			.body(gson.toJson(data))
 			.responseObject { _: Request, _: Response, result: Result<AuthenticateResponse, FuelError> ->
 				response = when(result) {
 					is Result.Failure -> {
 						Log.e(javaClass, "Failed to validate SSO token: $token, ${result.getException().exception}")
-						false
+						null
 					}
 					is Result.Success -> {
 						val res = result.get()
 						Log.ok(javaClass, "Validated SSO token for ${res.user.name}")
 						// Probably not needed, but just in case
-						(res.token == token)
+						gson.toJson(res)
 					}
 				}
 			}
 		r.join()
 		return response
+	}
+
+	override fun getSSOConfig(): Any? {
+		var response: Any? = null
+		val r = FuelManager.instance.get("/rest/usermanagement/1/config/cookie")
+			.responseObject { _: Request, _: Response, result: Result<CrowdCookieConfig, FuelError> ->
+				response = when(result) {
+					is Result.Failure -> {
+						Log.e(javaClass, "Failed to get cookie config:, ${result.getException().exception}")
+						null
+					}
+					is Result.Success -> {
+						val res = result.get()
+						Log.ok(javaClass, "Got cookie config $res")
+						res
+					}
+				}
+			}
+		r.join()
+		return response
+	}
+
+	override fun invalidateLogin(id: String) {
+		val r = FuelManager.instance.delete("/rest/usermanagement/1/session/${id}")
+			.responseString { it ->
+				Log.i(javaClass, "Invalidated token: $id, response: ${it.get()}")
+			}
+		r.join()
 	}
 }

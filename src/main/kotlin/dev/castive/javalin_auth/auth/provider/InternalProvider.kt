@@ -44,7 +44,7 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 		return false
 	}
 
-	override fun getLogin(uid: String, password: String): String? {
+	override fun getLogin(uid: String, password: String, data: Any?): String? {
 		return verification?.getToken(uid, password)
 	}
 
@@ -56,5 +56,9 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 		return true
 	}
 
-	override fun validate(token: String, data: Any) = true
+	override fun validate(token: String, data: Any): String? = "OK"
+
+	override fun getSSOConfig(): Any? = null
+
+	override fun invalidateLogin(id: String) {}
 }
