@@ -115,9 +115,7 @@ class LDAPConnection(private val config: LDAPConfig,
 		// This is a bad hack and not scalable
 		if(reconnectOnLogin) reconnect()
 		val user = searchFilter("($identifier=$uid)")
-//        Log.d(javaClass, "Found user: $user")
 		if(user == null || user.size == 0 || user.size > 1) return false  // There must be only 1 user with a uid
-		val dn = user[0].nameInNamespace
 
 		val userConfig = LDAPConfig(config.server, config.port, config.contextDN)
 

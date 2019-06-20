@@ -18,12 +18,14 @@ package dev.castive.javalin_auth.auth.provider
 
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
+import io.javalin.Context
 
 interface BaseProvider {
 	fun setup()
 	fun tearDown()
 	fun getUsers(): ArrayList<User>
 	fun getGroups(): ArrayList<Group>
+	fun hasUser(ctx: Context): User?
 	fun userInGroup(group: Group, user: User): Boolean
 	fun getLogin(uid: String, password: String, data: Any? = null): String?
 	fun getName(): String

@@ -16,12 +16,14 @@
 
 package dev.castive.javalin_auth.auth.provider
 
+import dev.castive.javalin_auth.actions.UserAction
 import dev.castive.javalin_auth.auth.connect.LDAPConfig2
 import dev.castive.javalin_auth.auth.connect.LDAPConnection
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.log2.Log
+import io.javalin.Context
 import java.util.*
 import javax.naming.AuthenticationException
 import javax.naming.NamingException
@@ -156,4 +158,9 @@ class LDAPProvider(private val config: LDAPConfig2,
 	override fun getSSOConfig(): Any? = null
 
 	override fun invalidateLogin(id: String) {}
+
+	override fun hasUser(ctx: Context): User? {
+		val claim = UserAction.getOrNull(ctx) ?: return null
+		return User(claim.username, "", "", SOURCE_NAME)
+	}
 }

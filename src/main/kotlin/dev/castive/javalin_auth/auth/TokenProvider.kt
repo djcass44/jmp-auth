@@ -32,7 +32,15 @@ object TokenProvider {
         }
     }
     var ageProfile = TokenAgeProfile.DEFAULT
-    private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
+    private var algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
+
+    /**
+     * Rebuild the class used to sign JWTs
+     * This can be used to synchronise between instances (should use PKI instead)
+     */
+    fun buildSigner(key: String) {
+        algorithm = Algorithm.HMAC256(key)
+    }
 
     fun createRefreshToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.refreshLimit)
     fun createRequestToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.tokenLimit)

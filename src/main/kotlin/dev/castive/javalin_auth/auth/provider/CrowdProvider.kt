@@ -31,10 +31,12 @@ import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.*
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
+import io.javalin.Context
 
 class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	companion object {
 		const val SOURCE_NAME = "Crowd"
+		var cookieConfig: CrowdCookieConfig? = null
 	}
 	private val gson = GsonBuilder().setPrettyPrinting().create()
 	private val userCache = arrayListOf<User>()
@@ -48,10 +50,11 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 				Pair("Accept", "application/json")
 			)
 		}
+		cookieConfig = getSSOConfig() as CrowdCookieConfig?
 	}
 
 	override fun tearDown() {
-
+		// No tear down required
 	}
 
 	// Get all the users we can
@@ -260,5 +263,31 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 				Log.i(javaClass, "Invalidated token: $id, response: ${it.get()}")
 			}
 		r.join()
+	}
+
+	override fun hasUser(ctx: Context): User? {
+		if(cookieConfig == null) return null
+		// Get the SSO token
+		val ssoToken = kotlin.runCatching {
+			return@runCatching ctx.cookie(cookieConfig!!.name)
+		}.getOrNull()
+		// No token means we can't do anything, return null
+		if(ssoToken == null) {
+			Log.i(javaClass, "Failed to extract SSO cookie")
+			return null
+		}
+		val token = getTokenInfo(ssoToken, ctx)
+		if(token == null) {
+			Log.i(javaClass, "Failed to get token from Crowd: $ssoToken")
+			return null
+		}
+		if(ssoToken != token.token) Log.a(javaClass, "Current token and new token don't match, Crowd must have issued a refresh!")
+		Log.d(javaClass, "Got user from Crowd: ${token.user.name}")
+		return User(token.user.name, "", "", SOURCE_NAME, token.token)
+	}
+	private fun getTokenInfo(token: String, ctx: Context): AuthenticateResponse? {
+		return kotlin.runCatching {
+			Util.gson.fromJson(validate(token, ctx), AuthenticateResponse::class.java)
+		}.getOrNull()
 	}
 }

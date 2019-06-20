@@ -21,10 +21,8 @@ import dev.castive.javalin_auth.auth.JWT
 import dev.castive.javalin_auth.auth.TokenProvider
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.javalin_auth.auth.external.ValidUserClaim
-import dev.castive.javalin_auth.auth.response.AuthenticateResponse
 import dev.castive.log2.Log
 import io.javalin.Context
-import io.javalin.ForbiddenResponse
 
 object UserAction {
     var verification: UserVerification? = null

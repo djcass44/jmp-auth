@@ -16,22 +16,20 @@
 
 package dev.castive.javalin_auth.auth.provider
 
+import dev.castive.javalin_auth.actions.UserAction
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.external.UserVerification
+import io.javalin.Context
 
 class InternalProvider(private val verification: UserVerification?): BaseProvider {
 	companion object {
 		const val SOURCE_NAME = "local"
 	}
 
-	override fun setup() {
+	override fun setup() {}
 
-	}
-
-	override fun tearDown() {
-
-	}
+	override fun tearDown() {}
 	override fun getUsers(): ArrayList<User> {
 		return arrayListOf()
 	}
@@ -61,4 +59,9 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 	override fun getSSOConfig(): Any? = null
 
 	override fun invalidateLogin(id: String) {}
+
+	override fun hasUser(ctx: Context): User? {
+		val claim = UserAction.getOrNull(ctx) ?: return null
+		return User(claim.username, "", "", LDAPProvider.SOURCE_NAME)
+	}
 }

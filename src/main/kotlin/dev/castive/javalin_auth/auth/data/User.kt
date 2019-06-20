@@ -16,4 +16,4 @@
 
 package dev.castive.javalin_auth.auth.data
 
-data class User(val username: String, val dn: String, val role: String, val source: String)
+data class User(val username: String, val dn: String, val role: String, val source: String, val token: String = "")

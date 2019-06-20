@@ -3,10 +3,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	kotlin("jvm") version "1.3.30"
 	maven
+//	jacoco
+//	id("org.sonarqube") version "2.7.1"
 }
 
 group = "dev.castive"
-version = "0.3.3"
+version = "0.4.0"
 
 repositories {
 	mavenCentral()
@@ -44,3 +46,14 @@ tasks.withType<KotlinCompile>().all {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+//tasks.jacocoTestReport {
+//	reports {
+//		xml.isEnabled = true
+//	}
+//}
+//sonarqube {
+//	properties{
+//		property("sonar.projectKey", "djcass44:jmp-auth")
+//		property("sonar.projectName", "djcass44/jmp-auth")
+//	}
+//}

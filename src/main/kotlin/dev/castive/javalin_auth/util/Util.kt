@@ -17,9 +17,12 @@
 
 package dev.castive.javalin_auth.util
 
+import com.google.gson.GsonBuilder
 import org.apache.commons.codec.binary.Base64
 import java.nio.charset.StandardCharsets
 
 object Util {
 	fun basicAuth(username: String, password: String) = "Basic ${Base64.encodeBase64URLSafeString("$username:$password".toByteArray(StandardCharsets.UTF_8))}"
+
+	val gson = GsonBuilder().setPrettyPrinting().create()
 }
