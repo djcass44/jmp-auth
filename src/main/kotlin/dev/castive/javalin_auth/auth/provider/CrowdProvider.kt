@@ -265,8 +265,8 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		r.join()
 	}
 
-	override fun hasUser(ctx: Context): User? {
-		if(cookieConfig == null) return null
+	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
+		if(cookieConfig == null) return Pair(null, null)
 		// Get the SSO token
 		val ssoToken = kotlin.runCatching {
 			return@runCatching ctx.cookie(cookieConfig!!.name)
@@ -274,16 +274,16 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		// No token means we can't do anything, return null
 		if(ssoToken == null) {
 			Log.i(javaClass, "Failed to extract SSO cookie")
-			return null
+			return Pair(null, null)
 		}
 		val token = getTokenInfo(ssoToken, ctx)
 		if(token == null) {
 			Log.i(javaClass, "Failed to get token from Crowd: $ssoToken")
-			return null
+			return Pair(null, null)
 		}
 		if(ssoToken != token.token) Log.a(javaClass, "Current token and new token don't match, Crowd must have issued a refresh!")
 		Log.d(javaClass, "Got user from Crowd: ${token.user.name}")
-		return User(token.user.name, "", "", SOURCE_NAME, token.token)
+		return Pair(User(token.user.name, "", "", SOURCE_NAME, token.token), BaseProvider.TokenContext(ssoToken, token.token))
 	}
 	private fun getTokenInfo(token: String, ctx: Context): AuthenticateResponse? {
 		return kotlin.runCatching {

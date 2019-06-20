@@ -111,7 +111,7 @@ class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
 
 	override fun invalidateLogin(id: String) {}
 
-	override fun hasUser(ctx: Context): User? {
-		return null
+	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
+		return Pair(null, null)
 	}
 }

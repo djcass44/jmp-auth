@@ -60,8 +60,8 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 
 	override fun invalidateLogin(id: String) {}
 
-	override fun hasUser(ctx: Context): User? {
-		val claim = UserAction.getOrNull(ctx) ?: return null
-		return User(claim.username, "", "", LDAPProvider.SOURCE_NAME)
+	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
+		val claim = UserAction.getOrNull(ctx) ?: return Pair(null, null)
+		return Pair(User(claim.username, "", "", LDAPProvider.SOURCE_NAME), null)
 	}
 }
