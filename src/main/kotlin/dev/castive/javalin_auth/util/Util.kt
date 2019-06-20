@@ -24,5 +24,5 @@ import java.nio.charset.StandardCharsets
 object Util {
 	fun basicAuth(username: String, password: String) = "Basic ${Base64.encodeBase64URLSafeString("$username:$password".toByteArray(StandardCharsets.UTF_8))}"
 
-	val gson = GsonBuilder().setPrettyPrinting().create()
+	val gson = GsonBuilder().setPrettyPrinting().create()!!
 }

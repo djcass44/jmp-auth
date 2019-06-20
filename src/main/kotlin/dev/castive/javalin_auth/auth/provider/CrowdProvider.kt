@@ -291,7 +291,9 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 	private fun getTokenInfo(token: String, ctx: Context): AuthenticateResponse? {
 		val response = runCatching {
-			Util.gson.fromJson(validate(token, ctx), AuthenticateResponse::class.java)
+			val res = validate(token, ctx)
+			Log.d(javaClass, "Attempting to deserialise crowd response: $res")
+			Util.gson.fromJson(res, AuthenticateResponse::class.java)
 		}
 		if(response.exceptionOrNull() != null) Log.e(javaClass, "Failed read Crowd session response: $token, cause: ${response.exceptionOrNull()}")
 		return response.getOrNull()
