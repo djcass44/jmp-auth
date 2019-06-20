@@ -50,6 +50,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 				Pair("Accept", "application/json")
 			)
 		}
+		Log.i(javaClass, "Loading Crowd initial cookie config")
 		cookieConfig = getSSOConfig() as CrowdCookieConfig?
 	}
 
@@ -266,7 +267,10 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 
 	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
-		if(cookieConfig == null) return Pair(null, null)
+		if(cookieConfig == null) {
+			Log.a(javaClass, "There is no loaded Crowd cookie config")
+			return Pair(null, null)
+		}
 		// Get the SSO token
 		val ssoToken = kotlin.runCatching {
 			return@runCatching ctx.cookie(cookieConfig!!.name)
@@ -286,8 +290,10 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		return Pair(User(token.user.name, "", "", SOURCE_NAME, token.token), BaseProvider.TokenContext(ssoToken, token.token))
 	}
 	private fun getTokenInfo(token: String, ctx: Context): AuthenticateResponse? {
-		return kotlin.runCatching {
+		val response = runCatching {
 			Util.gson.fromJson(validate(token, ctx), AuthenticateResponse::class.java)
-		}.getOrNull()
+		}
+		if(response.exceptionOrNull() != null) Log.e(javaClass, "Failed read Crowd session response: $token, cause: ${response.exceptionOrNull()}")
+		return response.getOrNull()
 	}
 }
