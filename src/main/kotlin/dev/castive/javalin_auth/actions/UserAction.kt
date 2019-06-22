@@ -27,18 +27,6 @@ import io.javalin.Context
 object UserAction {
     var verification: UserVerification? = null
 
-    @Deprecated(message = "All will return null on failure", replaceWith = ReplaceWith("getOrNull(ctx, verification, lax)"))
-    fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
-        return getOrNull(ctx, verification, lax)
-    }
-    @Deprecated(message = "All will return null on failure", replaceWith = ReplaceWith("getOrNull(ctx, lax)"))
-    fun get(ctx: Context, lax: Boolean = false): ValidUserClaim? {
-        if(verification == null) {
-            Log.e(javaClass, "No UserVerification has been setup.")
-            throw NullPointerException()
-        }
-        return getOrNull(ctx, verification!!, lax)
-    }
     fun getOrNull(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
         val jwt = JWT.map(ctx) ?: ""
         return if(jwt == "null" || jwt.isBlank()) null

@@ -269,6 +269,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
 		if(cookieConfig == null) {
 			Log.a(javaClass, "There is no loaded Crowd cookie config")
+			cookieConfig = getSSOConfig() as CrowdCookieConfig?
 			return Pair(null, null)
 		}
 		// Get the SSO token
@@ -291,7 +292,7 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	}
 	private fun getTokenInfo(token: String, ctx: Context): AuthenticateResponse? {
 		val response = runCatching {
-			val res = validate(token, ctx)
+			val res = validate(token, ValidateRequest(arrayOf(Factor("remote_address", ctx.ip()))))
 			Log.d(javaClass, "Attempting to deserialise crowd response: $res")
 			Util.gson.fromJson(res, AuthenticateResponse::class.java)
 		}

@@ -160,7 +160,8 @@ class LDAPProvider(private val config: LDAPConfig2,
 	override fun invalidateLogin(id: String) {}
 
 	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
-		val claim = UserAction.getOrNull(ctx) ?: return Pair(null, null)
+		val lax: Boolean = ctx.attribute("LAX") ?: false
+		val claim = UserAction.getOrNull(ctx, lax) ?: return Pair(null, null)
 		return Pair(User(claim.username, "", "", SOURCE_NAME), null)
 	}
 }
