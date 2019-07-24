@@ -29,6 +29,7 @@ dependencies {
 	implementation("com.auth0:jwks-rsa:0.8.1")
 
 	implementation("com.microsoft.graph:microsoft-graph:1.3.0")
+	implementation("com.github.scribejava:scribejava-apis:6.7.0")
 
 	// Networking
 	implementation("com.github.kittinunf.fuel:fuel:2.1.0")
