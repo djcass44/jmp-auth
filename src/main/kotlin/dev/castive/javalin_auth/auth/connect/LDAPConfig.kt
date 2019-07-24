@@ -23,7 +23,11 @@ class LDAPConfig(val server: String,
                  val contextDN: String) {
 	class Extras(val userFilter: String,
 	             val uid: String,
-				 val reconnectOnAuth: Boolean = false)
+	             val reconnectOnAuth: Boolean = false,
+	             val removeStale: Boolean = true,
+	             val syncRate: Long = 300000,
+	             val blockLocal: Boolean = false,
+	             val maxConnectAttempts: Int = 5)
 	class Groups(val groupFilter: String,
 	             val groupQuery: String,
 	             val gid: String)
