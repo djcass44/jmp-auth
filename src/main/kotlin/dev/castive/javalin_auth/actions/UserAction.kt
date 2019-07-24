@@ -21,32 +21,12 @@ import dev.castive.javalin_auth.auth.JWT
 import dev.castive.javalin_auth.auth.TokenProvider
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.javalin_auth.auth.external.ValidUserClaim
-import dev.castive.javalin_auth.auth.response.AuthenticateResponse
 import dev.castive.log2.Log
 import io.javalin.Context
-import io.javalin.ForbiddenResponse
 
 object UserAction {
     var verification: UserVerification? = null
 
-    fun get(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim {
-        val jwt = JWT.map(ctx) ?: run {
-            ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
-            throw ForbiddenResponse("Token verification failed")
-        }
-        Log.ok(javaClass, "JWT parse valid")
-        return if(lax) TokenProvider.verifyLax(jwt, verification)!! else TokenProvider.verify(jwt, verification) ?: run {
-            ctx.header(AuthenticateResponse.header, AuthenticateResponse.response)
-            throw ForbiddenResponse("Token verification failed")
-        }
-    }
-    fun get(ctx: Context, lax: Boolean = false): ValidUserClaim {
-        if(verification == null) {
-            Log.e(javaClass, "No UserVerification has been setup.")
-            throw NullPointerException()
-        }
-        return get(ctx, verification!!, lax)
-    }
     fun getOrNull(ctx: Context, verification: UserVerification, lax: Boolean = false): ValidUserClaim? {
         val jwt = JWT.map(ctx) ?: ""
         return if(jwt == "null" || jwt.isBlank()) null

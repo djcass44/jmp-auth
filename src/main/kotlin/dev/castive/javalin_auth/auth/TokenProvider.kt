@@ -32,7 +32,15 @@ object TokenProvider {
         }
     }
     var ageProfile = TokenAgeProfile.DEFAULT
-    private val algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
+    private var algorithm: Algorithm = Algorithm.HMAC256(PasswordGenerator().generate(32, false).toString()) // Strong causes blocking issues in Docker
+
+    /**
+     * Rebuild the class used to sign JWTs
+     * This can be used to synchronise between instances (should use PKI instead)
+     */
+    fun buildSigner(key: String) {
+        algorithm = Algorithm.HMAC256(key)
+    }
 
     fun createRefreshToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.refreshLimit)
     fun createRequestToken(user: String, userToken: String, userRole: String): String? = createToken(user, userToken, userRole, ageProfile.tokenLimit)
@@ -64,8 +72,12 @@ object TokenProvider {
             // Verify the user outside of this module
             val userHeader = result.getClaim(JWT.headerUser).asString()
             val tokenHeader = result.getClaim(JWT.headerToken).asString()
+            Log.d(javaClass, "Checking lax token: [user: $userHeader, token: $tokenHeader]")
             val v = verification.verify(userHeader, tokenHeader)
-            return if (v) ValidUserClaim(userHeader, tokenHeader) else null
+            return if (v) ValidUserClaim(userHeader, tokenHeader) else {
+                Log.e(javaClass, "Lax token is not valid")
+                null
+            }
         }
         catch (e: Exception) {
             Log.e(javaClass, "Failed lax token verification: $e")
@@ -80,8 +92,10 @@ object TokenProvider {
             .build()
         return try {
             val result = verify.verify(token)
-            if(result.expiresAt.before(Date(System.currentTimeMillis()))) // Token has expired
+            if(result.expiresAt.before(Date(System.currentTimeMillis()))) { // Token has expired
+                Log.e(javaClass, "Token has expired")
                 return null
+            }
             // Verify the user outside of this module
             val userHeader = result.getClaim(JWT.headerUser).asString()
             val tokenHeader = result.getClaim(JWT.headerToken).asString()

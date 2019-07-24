@@ -16,6 +16,7 @@
 
 package dev.castive.javalin_auth.auth.connect
 
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 import dev.castive.javalin_auth.except.MinimalConnectionBreachException
 import dev.castive.log2.Log
 import java.util.*
@@ -26,6 +27,7 @@ import javax.naming.directory.SearchControls
 import javax.naming.directory.SearchResult
 
 class LDAPConnection(private val config: LDAPConfig,
+                     private val serviceAccount: BasicAuthentication,
                      private val nested: Boolean = false, private val reconnectOnLogin: Boolean = false) {
 	var connected = false
 		private set
@@ -48,8 +50,8 @@ class LDAPConnection(private val config: LDAPConfig,
 		env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
 //		env["com.sun.jndi.ldap.connect.pool"] = "false"
 		env[Context.PROVIDER_URL] = "ldap://${config.server}:${config.port}/"
-		env[Context.SECURITY_PRINCIPAL] = config.serviceUserDN
-		env[Context.SECURITY_CREDENTIALS] = config.serviceUserPassword
+		env[Context.SECURITY_PRINCIPAL] = serviceAccount.username
+		env[Context.SECURITY_CREDENTIALS] = serviceAccount.password
 		try {
 			connection = InitialDirContext(env)
 			Log.ok(javaClass, "LDAP Authentication success!")
@@ -113,14 +115,12 @@ class LDAPConnection(private val config: LDAPConfig,
 		// This is a bad hack and not scalable
 		if(reconnectOnLogin) reconnect()
 		val user = searchFilter("($identifier=$uid)")
-//        Log.d(javaClass, "Found user: $user")
 		if(user == null || user.size == 0 || user.size > 1) return false  // There must be only 1 user with a uid
-		val dn = user[0].nameInNamespace
 
-		val userConfig = LDAPConfig(true, config.server, config.port, config.contextDN, dn, password)
+		val userConfig = LDAPConfig(config.server, config.port, config.contextDN)
 
 		// Open a new connection with the users creds
-		val verifyConnection = LDAPConnection(userConfig, nested = true)
+		val verifyConnection = LDAPConnection(userConfig, nested = true, serviceAccount = BasicAuthentication(uid, password))
 		val connect = verifyConnection.connected
 		Log.i(javaClass, "User credential validation: $connect")
 

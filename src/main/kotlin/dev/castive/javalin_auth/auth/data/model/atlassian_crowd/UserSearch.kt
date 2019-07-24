@@ -12,14 +12,29 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.external
+package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+data class UserSearch(val expand: String, val users: Array<Users>) {
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
 
-interface UserIngress {
-    fun ingestUsers(users: ArrayList<User>)
-    fun ingestGroups(groups: ArrayList<Group>)
+		other as UserSearch
+
+		if (expand != other.expand) return false
+		if (!users.contentEquals(other.users)) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = expand.hashCode()
+		result = 31 * result + users.contentHashCode()
+		return result
+	}
 }
+
+data class Users(val link: Link, val name: String)

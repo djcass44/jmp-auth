@@ -12,14 +12,18 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.external
+package dev.castive.javalin_auth.auth.connect
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
 
-interface UserIngress {
-    fun ingestUsers(users: ArrayList<User>)
-    fun ingestGroups(groups: ArrayList<Group>)
+interface BaseConfig {
+	val enabled: Boolean
+	val serviceAccount: BasicAuthentication
+	val syncRate: Long
+	val maxConnectAttempts: Int
+	val blockLocal: Boolean
+	val removeStale: Boolean
 }

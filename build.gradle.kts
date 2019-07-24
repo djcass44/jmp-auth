@@ -3,14 +3,17 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	kotlin("jvm") version "1.3.30"
 	maven
+//	jacoco
+//	id("org.sonarqube") version "2.7.1"
 }
 
 group = "dev.castive"
-version = "0.2.2"
+version = "0.4.0"
 
 repositories {
-	maven(url = "https://jitpack.io")
+	mavenCentral()
 	jcenter()
+	maven(url = "https://jitpack.io")
 }
 
 dependencies {
@@ -27,14 +30,30 @@ dependencies {
 
 	implementation("com.microsoft.graph:microsoft-graph:1.3.0")
 
+	// Networking
+	implementation("com.github.kittinunf.fuel:fuel:2.1.0")
+	implementation("com.github.kittinunf.fuel:fuel-coroutines:2.1.0")
+	implementation("com.github.kittinunf.fuel:fuel-gson:2.1.0")
+
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.2.0")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 }
 
 tasks.withType<KotlinCompile>().all {
-	kotlinOptions.jvmTarget = "1.8"
+	kotlinOptions.jvmTarget = "11"
 }
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+//tasks.jacocoTestReport {
+//	reports {
+//		xml.isEnabled = true
+//	}
+//}
+//sonarqube {
+//	properties{
+//		property("sonar.projectKey", "djcass44:jmp-auth")
+//		property("sonar.projectName", "djcass44/jmp-auth")
+//	}
+//}

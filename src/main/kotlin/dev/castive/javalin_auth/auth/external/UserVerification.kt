@@ -16,9 +16,10 @@
 
 package dev.castive.javalin_auth.auth.external
 
-public interface UserVerification {
-    public fun verify(userClaim: String, tokenClaim: String): Boolean
-    public fun getToken(uid: String): String // Used when verification has been completed elsewhere (e.g. LDAP)
-    public fun getToken(uid: String, password: String): String
+interface UserVerification {
+    fun verify(userClaim: String, tokenClaim: String): Boolean
+    fun getToken(uid: String): String // Used when verification has been completed elsewhere (e.g. LDAP)
+    fun getToken(uid: String, password: String): String
 }
-public data class ValidUserClaim(val username: String, val token: String)
+
+data class ValidUserClaim(val username: String, val token: String)

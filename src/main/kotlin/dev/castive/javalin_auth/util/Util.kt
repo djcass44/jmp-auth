@@ -12,14 +12,17 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.external
+package dev.castive.javalin_auth.util
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+import com.google.gson.GsonBuilder
+import org.apache.commons.codec.binary.Base64
+import java.nio.charset.StandardCharsets
 
-interface UserIngress {
-    fun ingestUsers(users: ArrayList<User>)
-    fun ingestGroups(groups: ArrayList<Group>)
+object Util {
+	fun basicAuth(username: String, password: String) = "Basic ${Base64.encodeBase64URLSafeString("$username:$password".toByteArray(StandardCharsets.UTF_8))}"
+
+	val gson = GsonBuilder().setPrettyPrinting().create()!!
 }
