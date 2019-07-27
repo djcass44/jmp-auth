@@ -31,7 +31,7 @@ import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.*
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
-import io.javalin.Context
+import io.javalin.http.Context
 
 class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 	companion object {
