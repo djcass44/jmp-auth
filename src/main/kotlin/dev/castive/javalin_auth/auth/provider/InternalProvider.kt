@@ -27,6 +27,9 @@ class InternalProvider(private val verification: UserVerification?): BaseProvide
 		const val SOURCE_NAME = "local"
 	}
 
+	override val flowBased: Boolean
+		get() = false
+
 	override fun setup() {}
 
 	override fun tearDown() {}

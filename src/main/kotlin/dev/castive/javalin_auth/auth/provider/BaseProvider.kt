@@ -21,6 +21,7 @@ import dev.castive.javalin_auth.auth.data.User
 import io.javalin.http.Context
 
 interface BaseProvider {
+	val flowBased: Boolean
 	data class TokenContext(val last: String, val current: String)
 	fun setup()
 	fun tearDown()

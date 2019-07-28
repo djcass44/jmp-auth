@@ -38,6 +38,10 @@ class CrowdProvider(private val config: CrowdConfig): BaseProvider {
 		const val SOURCE_NAME = "Crowd"
 		var cookieConfig: CrowdCookieConfig? = null
 	}
+
+	override val flowBased: Boolean
+		get() = false
+
 	private val gson = GsonBuilder().setPrettyPrinting().create()
 	private val userCache = arrayListOf<User>()
 

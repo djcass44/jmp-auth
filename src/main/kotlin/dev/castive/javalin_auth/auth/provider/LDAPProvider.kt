@@ -33,6 +33,10 @@ class LDAPProvider(private val config: LDAPConfig2,
 	companion object {
 		const val SOURCE_NAME = "ldap"
 	}
+
+	override val flowBased: Boolean
+		get() = false
+
 	private lateinit var connection: LDAPConnection
 
 	private val userCache = arrayListOf<User>()

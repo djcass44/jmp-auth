@@ -17,22 +17,24 @@
 
 package dev.castive.javalin_auth.auth.provider
 
-import com.microsoft.graph.authentication.IAuthenticationProvider
 import com.microsoft.graph.core.ClientException
 import com.microsoft.graph.requests.extensions.GraphServiceClient
+import dev.castive.javalin_auth.auth.connect.AADAuthenticationProvider
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.log2.Log
 import io.javalin.http.Context
 
-@Deprecated(message = "This provider isn't ready.", level = DeprecationLevel.HIDDEN)
-class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {
+class AzureProvider : BaseProvider {
 	companion object {
 		const val SOURCE_NAME = "azure"
 	}
 
+	override val flowBased: Boolean
+		get() = true
+
 	private val graphClient = GraphServiceClient.builder()
-		.authenticationProvider(authProvider)
+		.authenticationProvider(AADAuthenticationProvider())
 		.buildClient()
 
 	override fun setup() {

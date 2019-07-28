@@ -23,13 +23,14 @@ dependencies {
 	implementation("com.github.djcass44:log2:3.3")
 
 	implementation("io.javalin:javalin:3.2.0")
-	implementation("org.slf4j:slf4j-simple:1.7.25")
+	implementation("org.slf4j:slf4j-simple:1.7.26")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
 	
 	implementation("com.auth0:java-jwt:3.7.0")
 	implementation("com.auth0:jwks-rsa:0.8.1")
 
-	implementation("com.microsoft.graph:microsoft-graph:1.3.0")
+	implementation("com.microsoft.graph:microsoft-graph:1.5.0")
+	implementation("com.microsoft.azure:msal4j:0.5.0-preview")
 
 	// Networking
 	implementation("com.github.kittinunf.fuel:fuel:2.1.0")
