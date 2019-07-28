@@ -20,7 +20,7 @@ import dev.castive.javalin_auth.actions.UserAction
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.external.UserVerification
-import io.javalin.Context
+import io.javalin.http.Context
 
 class InternalProvider(private val verification: UserVerification?): BaseProvider {
 	companion object {

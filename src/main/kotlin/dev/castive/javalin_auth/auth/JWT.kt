@@ -16,7 +16,7 @@
 
 package dev.castive.javalin_auth.auth
 
-import io.javalin.Context
+import io.javalin.http.Context
 
 object JWT {
     const val headerToken = "X-Auth-Token"

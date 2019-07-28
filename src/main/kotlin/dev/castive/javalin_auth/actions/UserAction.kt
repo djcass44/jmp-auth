@@ -22,7 +22,7 @@ import dev.castive.javalin_auth.auth.TokenProvider
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.javalin_auth.auth.external.ValidUserClaim
 import dev.castive.log2.Log
-import io.javalin.Context
+import io.javalin.http.Context
 
 object UserAction {
     var verification: UserVerification? = null

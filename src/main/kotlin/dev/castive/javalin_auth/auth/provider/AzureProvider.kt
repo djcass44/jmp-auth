@@ -23,7 +23,7 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.log2.Log
-import io.javalin.Context
+import io.javalin.http.Context
 
 @Deprecated(message = "This provider isn't ready.", level = DeprecationLevel.HIDDEN)
 class AzureProvider(authProvider: IAuthenticationProvider): BaseProvider {

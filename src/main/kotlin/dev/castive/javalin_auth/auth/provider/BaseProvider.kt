@@ -18,7 +18,7 @@ package dev.castive.javalin_auth.auth.provider
 
 import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
-import io.javalin.Context
+import io.javalin.http.Context
 
 interface BaseProvider {
 	data class TokenContext(val last: String, val current: String)

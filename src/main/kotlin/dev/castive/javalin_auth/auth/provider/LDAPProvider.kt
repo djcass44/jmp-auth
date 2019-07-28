@@ -23,7 +23,7 @@ import dev.castive.javalin_auth.auth.data.Group
 import dev.castive.javalin_auth.auth.data.User
 import dev.castive.javalin_auth.auth.external.UserVerification
 import dev.castive.log2.Log
-import io.javalin.Context
+import io.javalin.http.Context
 import java.util.*
 import javax.naming.AuthenticationException
 import javax.naming.NamingException
