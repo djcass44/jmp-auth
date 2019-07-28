@@ -17,87 +17,100 @@
 
 package dev.castive.javalin_auth.auth.provider
 
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.gson.responseObject
+import com.github.kittinunf.result.Result
 import com.github.scribejava.apis.GitHubApi
 import com.github.scribejava.core.builder.ServiceBuilder
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
+import com.github.scribejava.core.model.OAuth2AccessToken
+import dev.castive.javalin_auth.auth.data.User2
+import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
+import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
 import dev.castive.log2.Log
 import dev.castive.securepass3.PasswordGenerator
-import io.javalin.Context
-import io.javalin.apibuilder.ApiBuilder.get
-import io.javalin.apibuilder.ApiBuilder.post
-import io.javalin.apibuilder.EndpointGroup
 
-class OauthProvider: BaseProvider {
-	companion object {
-		const val SOURCE_NAME = "oauth2"
+class OauthProvider {
+	val SOURCE_NAME = "oauth2"
 
-		private const val apiUrl = "https://github.com/login/oauth/authorize"
-		private const val apiScope = "read:user"
+	// using GitHub for now, will generify once working
+	private val flow = BaseFlow(
+		"https://github.com/login/oauth/authorize",
+		apiUrl = "https://api.github.com",
+		callbackUrl = "http://localhost:3000/callback",
+		scope = "read:user",
+		clientId = "",
+		clientSecret = "",
+		api = GitHubApi.instance()
+	)
 
-		private const val clientId = ""
-		private const val clientSecret = ""
-	}
+	// used to generate a random code for requests
 	private val generator = PasswordGenerator()
+	private val service = ServiceBuilder(flow.clientId)
+		.apiSecret(flow.clientSecret)
+		.callback(flow.callbackUrl)
+		.defaultScope(flow.scope)
+		.build(flow.api)
 
-	private val service = ServiceBuilder(clientId)
-		.apiSecret(clientSecret)
-		.callback("http://localhost:7000/oauth2callback")
-		.defaultScope(apiScope)
-		.build(GitHubApi.instance())
+	/**
+	 * Get the url for the consent screen to redirect the user
+	 */
+	fun getAuthoriseUrl(): String = service.getAuthorizationUrl(generator.generate(32).toString())
 
-	override fun setup() {}
+	/**
+	 * Get an access token using the consent code
+	 */
+	fun getAccessToken(code: String): OAuth2AccessToken = service.getAccessToken(code)
 
-	override fun tearDown() {}
+	/**
+	 * Get a new access token using our refresh token
+	 */
+	fun refreshToken(refreshToken: String): OAuth2AccessToken = service.refreshAccessToken(refreshToken)
+	fun revokeToken(accessToken: String) = service.revokeToken(accessToken)
+	/**
+	 * Used for logout
+	 * Async is preferred because the user isn't waiting on the result
+	 */
+	fun revokeTokenAsync(accessToken: String) = service.revokeTokenAsync(accessToken)
 
-	override fun getUsers(): ArrayList<User> {
-		return arrayListOf()
-	}
-
-	override fun getGroups(): ArrayList<Group> {
-		return arrayListOf()
-	}
-
-	override fun userInGroup(group: Group, user: User): Boolean {
-		return false
-	}
-
-	override fun getLogin(uid: String, password: String, data: Any?): String? {
-		val url = service.getAuthorizationUrl(generator.generate(32).toString())
-		Log.d(javaClass, "Auth url: $url")
-		return null
-	}
-
-	override fun getName(): String {
-		return SOURCE_NAME
-	}
-
-	override fun connected(): Boolean {
+	/**
+	 * Check if the access token is still valid
+	 */
+	fun isTokenValid(accessToken: String): Boolean {
+//		var valid = false
+//		val r = FuelManager.instance.get("${flow.apiUrl}/applications/${flow.clientId}/token/$accessToken")
+//			.appendHeader("Authorization", Util.basicAuth(flow.clientId, flow.clientSecret))
+//			.responseObject { _: Request, response: Response, result: Result<String, FuelError> ->
+//				val code = response.statusCode
+//				Log.d(javaClass, "Got response code: $code")
+//				Log.d(javaClass, "Got response body: ${result.component1()}")
+//				// 200 means that token is OK, 400 is invalid
+//				valid = code == 200
+//			}
+//		r.join()
+//		return valid
 		return true
 	}
 
-	override fun validate(token: String, data: Any): String? = "OK"
-
-	override fun getSSOConfig(): Any? = null
-
-	override fun invalidateLogin(id: String) {}
-
-	override fun hasUser(ctx: Context): Pair<User?, BaseProvider.TokenContext?> {
-		return Pair(null, null)
-	}
-
-	fun getCallbackRoute(): EndpointGroup {
-		return EndpointGroup {
-			get("/oauth2callback") { ctx ->
-				respondToCallback(ctx)
+	/**
+	 * Get the information required to create a user
+	 */
+	fun getUserInformation(accessToken: String): User2? {
+		var user: User2? = null
+		val r = FuelManager.instance.get("${flow.apiUrl}/user")
+			.appendHeader("Authorization", "token $accessToken")
+			.responseObject { _: Request, response: Response, result: Result<GitHubUser, FuelError> ->
+				if(response.statusCode != 200) {
+					Log.e(javaClass, "Failed to load user information: ${result.component2()?.exception}")
+					return@responseObject
+				}
+				// Assume nothing else has gone wrong
+				user = User2(result.get())
 			}
-			post("/oauth2callback") { ctx ->
-				respondToCallback(ctx)
-			}
-		}
-	}
-
-	private fun respondToCallback(ctx: Context) {
-		Log.a(javaClass, "Oauth2 callback")
+		// wait for a response
+		r.join()
+		return user
 	}
 }
