@@ -29,6 +29,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken
 import dev.castive.javalin_auth.auth.data.User2
 import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
 import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
+import dev.castive.javalin_auth.util.EnvUtil
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
 import dev.castive.securepass3.PasswordGenerator
@@ -41,10 +42,10 @@ class OauthProvider {
 	private val flow = BaseFlow(
 		"https://github.com/login/oauth/authorize",
 		apiUrl = "https://api.github.com",
-		callbackUrl = "http://localhost:3000/callback",
+		callbackUrl = EnvUtil.getEnv(EnvUtil.GITHUB_CALLBACK),
 		scope = "read:user",
-		clientId = "",
-		clientSecret = "",
+		clientId = EnvUtil.getEnv(EnvUtil.GITHUB_CLIENT_ID),
+		clientSecret = EnvUtil.getEnv(EnvUtil.GITHUB_CLIENT_SECRET),
 		api = GitHubApi.instance()
 	)
 
