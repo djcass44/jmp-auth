@@ -17,6 +17,8 @@ repositories {
 	maven(url = "https://dl.bintray.com/nitram509/jbrotli/")
 }
 
+val junitVersion: String by project
+
 dependencies {
 	implementation(kotlin("stdlib-jdk8"))
 
@@ -38,16 +40,17 @@ dependencies {
 	implementation("com.github.kittinunf.fuel:fuel-coroutines:2.1.0")
 	implementation("com.github.kittinunf.fuel:fuel-gson:2.1.0")
 
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
-	testImplementation("org.junit.jupiter:junit-jupiter-params:5.2.0")
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+	testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 }
-
-tasks.withType<KotlinCompile>().all {
-	kotlinOptions.jvmTarget = "11"
-}
-tasks.withType<Test> {
-	useJUnitPlatform()
+tasks {
+	withType<KotlinCompile>().all {
+		kotlinOptions.jvmTarget = "11"
+	}
+	withType<Test> {
+		useJUnitPlatform()
+	}
 }
 //tasks.jacocoTestReport {
 //	reports {
