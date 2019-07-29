@@ -29,9 +29,11 @@ import com.github.scribejava.core.model.OAuth2AccessToken
 import dev.castive.javalin_auth.auth.data.User2
 import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
 import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
+import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
 import dev.castive.securepass3.PasswordGenerator
 
+@Suppress("unused")
 class OauthProvider {
 	val SOURCE_NAME = "oauth2"
 
@@ -79,19 +81,18 @@ class OauthProvider {
 	 * Check if the access token is still valid
 	 */
 	fun isTokenValid(accessToken: String): Boolean {
-//		var valid = false
-//		val r = FuelManager.instance.get("${flow.apiUrl}/applications/${flow.clientId}/token/$accessToken")
-//			.appendHeader("Authorization", Util.basicAuth(flow.clientId, flow.clientSecret))
-//			.responseObject { _: Request, response: Response, result: Result<String, FuelError> ->
-//				val code = response.statusCode
-//				Log.d(javaClass, "Got response code: $code")
-//				Log.d(javaClass, "Got response body: ${result.component1()}")
-//				// 200 means that token is OK, 400 is invalid
-//				valid = code == 200
-//			}
-//		r.join()
-//		return valid
-		return true
+		var valid = false
+		val r = FuelManager.instance.get("${flow.apiUrl}/applications/${flow.clientId}/tokens/$accessToken")
+			.appendHeader("Authorization", Util.basicAuth(flow.clientId, flow.clientSecret))
+			.responseObject { _: Request, response: Response, result: Result<String, FuelError> ->
+				val code = response.statusCode
+				Log.d(javaClass, "Got response code: $code")
+				Log.d(javaClass, "Got response body: ${result.component1()}")
+				// 200 means that token is OK, 400 is invalid
+				valid = code == 200
+			}
+		r.join()
+		return valid
 	}
 
 	/**
