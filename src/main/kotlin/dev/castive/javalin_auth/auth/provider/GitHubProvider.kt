@@ -24,23 +24,18 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.result.Result
 import com.github.scribejava.apis.GitHubApi
-import com.github.scribejava.core.builder.ServiceBuilder
-import com.github.scribejava.core.model.OAuth2AccessToken
 import dev.castive.javalin_auth.auth.data.User2
 import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
+import dev.castive.javalin_auth.auth.provider.flow.AbstractOAuth2Provider
 import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
 import dev.castive.javalin_auth.util.EnvUtil
 import dev.castive.javalin_auth.util.Util
 import dev.castive.log2.Log
-import dev.castive.securepass3.PasswordGenerator
 
 @Suppress("unused")
-class OauthProvider {
-	val SOURCE_NAME = "oauth2"
-
-	// using GitHub for now, will generify once working
-	private val flow = BaseFlow(
-		"https://github.com/login/oauth/authorize",
+class GitHubProvider: AbstractOAuth2Provider(
+	BaseFlow(
+		authorizeUrl = "https://github.com/login/oauth/authorize",
 		apiUrl = "https://api.github.com",
 		callbackUrl = EnvUtil.getEnv(EnvUtil.GITHUB_CALLBACK),
 		scope = "read:user",
@@ -48,40 +43,14 @@ class OauthProvider {
 		clientSecret = EnvUtil.getEnv(EnvUtil.GITHUB_CLIENT_SECRET),
 		api = GitHubApi.instance()
 	)
-
-	// used to generate a random code for requests
-	private val generator = PasswordGenerator()
-	private val service = ServiceBuilder(flow.clientId)
-		.apiSecret(flow.clientSecret)
-		.callback(flow.callbackUrl)
-		.defaultScope(flow.scope)
-		.build(flow.api)
-
-	/**
-	 * Get the url for the consent screen to redirect the user
-	 */
-	fun getAuthoriseUrl(): String = service.getAuthorizationUrl(generator.generate(32).toString())
-
-	/**
-	 * Get an access token using the consent code
-	 */
-	fun getAccessToken(code: String): OAuth2AccessToken = service.getAccessToken(code)
-
-	/**
-	 * Get a new access token using our refresh token
-	 */
-	fun refreshToken(refreshToken: String): OAuth2AccessToken = service.refreshAccessToken(refreshToken)
-	fun revokeToken(accessToken: String) = service.revokeToken(accessToken)
-	/**
-	 * Used for logout
-	 * Async is preferred because the user isn't waiting on the result
-	 */
-	fun revokeTokenAsync(accessToken: String) = service.revokeTokenAsync(accessToken)
+) {
+	override val sourceName: String
+		get() = "github"
 
 	/**
 	 * Check if the access token is still valid
 	 */
-	fun isTokenValid(accessToken: String): Boolean {
+	override fun isTokenValid(accessToken: String): Boolean {
 		var valid = false
 		val r = FuelManager.instance.get("${flow.apiUrl}/applications/${flow.clientId}/tokens/$accessToken")
 			.appendHeader("Authorization", Util.basicAuth(flow.clientId, flow.clientSecret))
@@ -99,7 +68,7 @@ class OauthProvider {
 	/**
 	 * Get the information required to create a user
 	 */
-	fun getUserInformation(accessToken: String): User2? {
+	override fun getUserInformation(accessToken: String): User2? {
 		var user: User2? = null
 		val r = FuelManager.instance.get("${flow.apiUrl}/user")
 			.appendHeader("Authorization", "token $accessToken")
