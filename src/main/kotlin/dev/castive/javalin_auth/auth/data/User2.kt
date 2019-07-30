@@ -18,6 +18,7 @@
 package dev.castive.javalin_auth.auth.data
 
 import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
+import dev.castive.javalin_auth.auth.data.model.google.GoogleUser
 
 data class User2(
 	val username: String,
@@ -27,4 +28,5 @@ data class User2(
 	val role: String
 ) {
 	constructor(user: GitHubUser): this(user.login, user.name, user.avatar_url, "github", user.type)
+	constructor(user: GoogleUser): this(user.sub, user.name, user.picture, "google", "user")
 }

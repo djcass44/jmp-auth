@@ -29,7 +29,7 @@ abstract class AbstractOAuth2Provider(internal val flow: BaseFlow) {
 
 	// used to generate a random code for requests
 	private val generator = PasswordGenerator()
-	private val service = ServiceBuilder(flow.clientId)
+	internal val service = ServiceBuilder(flow.clientId)
 		.apiSecret(flow.clientSecret)
 		.callback(flow.callbackUrl)
 		.defaultScope(flow.scope)

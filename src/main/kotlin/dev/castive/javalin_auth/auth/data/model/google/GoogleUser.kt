@@ -15,19 +15,13 @@
  *
  */
 
-package dev.castive.javalin_auth.util
+package dev.castive.javalin_auth.auth.data.model.google
 
-object EnvUtil {
-	fun getEnv(name: String, default: String = ""): String {
-		val env = System.getenv(name)
-		return if (env.isNullOrEmpty()) default else env
-	}
-
-	const val GITHUB_CALLBACK = "GITHUB_CALLBACK"
-	const val GITHUB_CLIENT_ID = "GITHUB_CLIENT_ID"
-	const val GITHUB_CLIENT_SECRET = "GITHUB_CLIENT_SECRET"
-
-	const val GOOGLE_CALLBACK = "GOOGLE_CALLBACK"
-	const val GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID"
-	const val GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET"
-}
+data class GoogleUser(
+	val sub: String, // uid
+	val name: String,
+	val picture: String, // avatar url
+	val iss: String, // issuer identifier (must be google)
+	val aud: String, // clientId of requester (probably this app)
+	val exp: Long // expiry date (unix)
+)
