@@ -59,10 +59,7 @@ class GoogleProvider: AbstractOAuth2Provider(
 		}
 		Log.d(javaClass, "Got response from google: ${response.body}")
 		val res = Util.gson.fromJson(response.body, GoogleUser::class.java)
-		return if(validateTokenResponse(res))
-			User2(res)
-		else
-			null
+		return User2(res)
 	}
 
 	/**
