@@ -18,9 +18,9 @@
 package dev.castive.javalin_auth.auth.data.model.github
 
 data class GitHubUser(
-	val login: String,
+	val login: String, // username
 	val id: Int,
 	val avatar_url: String,
-	val type: String,
-	val name: String
+	val type: String, // probably always "User"
+	val name: String // display name
 )
