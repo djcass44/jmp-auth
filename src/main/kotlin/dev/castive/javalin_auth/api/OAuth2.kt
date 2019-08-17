@@ -110,7 +110,12 @@ class OAuth2(private val baseUrl: String, private val callback: Callback): Endpo
 			)
 			val oauth = getProvider(ctx)
 			Log.a(javaClass, "Logging out user with accessToken: $token")
-			oauth.revokeTokenAsync(token)
+			// Sometimes revoking the token is unsupported and throws an exception
+			// This is okay and we still want to return the 200
+			try { oauth.revokeTokenAsync(token) }
+			catch (e: Exception) {
+				Log.e(javaClass, "Failed to logout: $e")
+			}
 			ctx.status(HttpStatus.OK_200)
 		}, Roles.defaultAccessRole)
 	}
