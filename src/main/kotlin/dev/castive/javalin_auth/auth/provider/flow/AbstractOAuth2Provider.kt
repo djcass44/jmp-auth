@@ -20,25 +20,33 @@ package dev.castive.javalin_auth.auth.provider.flow
 import com.github.scribejava.core.builder.ServiceBuilder
 import com.github.scribejava.core.model.OAuth2AccessToken
 import dev.castive.javalin_auth.auth.data.User2
-import dev.castive.securepass3.PasswordGenerator
+import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
+import dev.dcas.util.extend.base64Url
+import dev.dcas.util.extend.decodeBase64Url
+import dev.dcas.util.extend.randomString
 import java.util.concurrent.Future
 
 @Suppress("unused")
-abstract class AbstractOAuth2Provider(internal val flow: BaseFlow) {
+abstract class AbstractOAuth2Provider(internal val provider: BaseFlow) {
+	companion object {
+		fun parseState(state: String): Triple<String, String, String> {
+			val (name, meta, code) = state.decodeBase64Url().split(":", limit = 3)
+			return Triple(name, meta, code)
+		}
+	}
+
 	abstract val sourceName: String
 
-	// used to generate a random code for requests
-	private val generator = PasswordGenerator()
-	internal val service = ServiceBuilder(flow.clientId)
-		.apiSecret(flow.clientSecret)
-		.callback(flow.callbackUrl)
-		.defaultScope(flow.scope)
-		.build(flow.api)
+	internal val service = ServiceBuilder(provider.clientId)
+		.apiSecret(provider.clientSecret)
+		.callback(provider.callbackUrl)
+		.defaultScope(provider.scope)
+		.build(provider.api)
 
 	/**
 	 * Get the url for the consent screen to redirect the user
 	 */
-	fun getAuthoriseUrl(): String = service.getAuthorizationUrl(generator.generate(32).toString())
+	fun getAuthoriseUrl(meta: String = ""): String = service.getAuthorizationUrl(getState(meta))
 
 	/**
 	 * Get an access token using the consent code
@@ -46,22 +54,29 @@ abstract class AbstractOAuth2Provider(internal val flow: BaseFlow) {
 	fun getAccessToken(code: String): OAuth2AccessToken = service.getAccessToken(code)
 
 	/**
+	 * Gets a token using basic authentication
+	 */
+	open fun getBasicAccessToken(basicAuth: BasicAuthentication, data: Any? = null): OAuth2AccessToken = throw NotImplementedError("This method must be overridden")
+
+	/**
 	 * Get a new access token using our refresh token
 	 */
 	fun refreshToken(refreshToken: String): OAuth2AccessToken = service.refreshAccessToken(refreshToken)
-	fun revokeToken(accessToken: String) = service.revokeToken(accessToken)
+	open fun revokeToken(accessToken: String) = service.revokeToken(accessToken)
 	/**
 	 * Used for logout
 	 * Async is preferred because the user isn't waiting on the result
 	 */
-	fun revokeTokenAsync(accessToken: String): Future<Void> = service.revokeTokenAsync(accessToken)
+	open fun revokeTokenAsync(accessToken: String): Future<*> = service.revokeTokenAsync(accessToken)
 
 	/**
 	 * Check if the access token is still valid
 	 */
-	abstract fun isTokenValid(accessToken: String): Boolean
+	abstract fun isTokenValid(accessToken: String, data: Any? = null): Boolean
 	/**
 	 * Get the information required to create a user
 	 */
 	abstract fun getUserInformation(accessToken: String): User2?
+
+	private fun getState(meta: String = ""): String = "$sourceName:$meta:${32.randomString()}".base64Url()
 }

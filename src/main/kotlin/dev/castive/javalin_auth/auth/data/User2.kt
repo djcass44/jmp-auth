@@ -27,6 +27,6 @@ data class User2(
 	val source: String,
 	val role: String
 ) {
-	constructor(user: GitHubUser): this(user.login, user.name, user.avatar_url, "github", user.type)
+	constructor(user: GitHubUser): this(user.login, user.name, user.avatarUrl, "github", user.type)
 	constructor(user: GoogleUser): this(user.sub, user.name, user.picture, "google", "user")
 }

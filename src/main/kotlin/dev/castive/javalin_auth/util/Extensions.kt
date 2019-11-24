@@ -12,10 +12,12 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.data
+package dev.castive.javalin_auth.util
 
-data class Group(val name: String, val dn: String, val members: ArrayList<User>, val source: String) {
-	constructor(name: String, dn: String, source: String): this(name, dn, arrayListOf(), source)
-}
+import io.javalin.http.Context
+import org.eclipse.jetty.http.HttpStatus
+
+fun Context.ok(): Context = this.status(HttpStatus.OK_200)

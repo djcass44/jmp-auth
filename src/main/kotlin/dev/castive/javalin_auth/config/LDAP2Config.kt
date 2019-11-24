@@ -12,8 +12,17 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.data
+package dev.castive.javalin_auth.config
 
-data class User(val username: String, val dn: String, val role: String, val source: String, val token: String = "")
+data class LDAP2Config(
+	val enabled: Boolean,
+	val url: String,
+	val port: Int = 389,
+	val contextDN: String,
+	val uidField: String = "uid",
+	val username: String,
+	val password: String
+)

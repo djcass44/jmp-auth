@@ -17,21 +17,6 @@
 
 package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
 
-data class ValidateRequest(val validationFactors: Array<Factor>) {
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as ValidateRequest
-
-		if (!validationFactors.contentEquals(other.validationFactors)) return false
-
-		return true
-	}
-
-	override fun hashCode(): Int {
-		return validationFactors.contentHashCode()
-	}
-}
+data class ValidateRequest(val validationFactors: List<Factor>)
 
 data class Factor(val name: String, val value: String)

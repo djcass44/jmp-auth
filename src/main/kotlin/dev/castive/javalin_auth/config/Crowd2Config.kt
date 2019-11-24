@@ -12,14 +12,14 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.external
+package dev.castive.javalin_auth.config
 
-import dev.castive.javalin_auth.auth.data.Group
-import dev.castive.javalin_auth.auth.data.User
-
-interface UserIngress {
-    fun ingestUsers(users: ArrayList<User>)
-    fun ingestGroups(groups: ArrayList<Group>)
-}
+data class Crowd2Config(
+	val enabled: Boolean,
+	val url: String,
+	val username: String,
+	val password: String
+)

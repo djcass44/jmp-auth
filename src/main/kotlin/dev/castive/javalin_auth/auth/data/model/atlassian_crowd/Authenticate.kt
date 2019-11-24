@@ -19,23 +19,24 @@ package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
 
 import com.google.gson.annotations.SerializedName
 
-data class AuthenticateRequest(val username: String,
-                               val password: String,
-                               @SerializedName("validation-factors")
-                               val validationFactors: ValidationFactors?) {
-}
+data class AuthenticateRequest(
+    val username: String,
+    val password: String,
+    @SerializedName("validation-factors")
+    val validationFactors: ValidationFactors?
+)
 
-data class AuthenticateResponse(val expand: String,
-                                val token: String,
-                                val user: User,
-                                val link: Link,
-                                @SerializedName("created-date")
-                                val createdDate: Long,
-                                @SerializedName("expiry-date")
-                                val expiryDate: Long)
+data class AuthenticateResponse(
+    val expand: String,
+    val token: String,
+    val user: User,
+    @SerializedName("created-date")
+    val createdDate: Long,
+    @SerializedName("expiry-date")
+    val expiryDate: Long
+)
 
-data class User(val name: String)
-data class Link(val href: String, val rel: String)
+data class User(val name: String, @SerializedName("display-name") val displayName: String?)
 data class ValidationFactors(val validationFactors: ArrayList<Factor>)
 
 data class BasicAuthentication(val username: String, val password: String)

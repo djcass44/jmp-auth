@@ -24,32 +24,33 @@ import dev.castive.javalin_auth.auth.data.User2
 import dev.castive.javalin_auth.auth.data.model.google.GoogleUser
 import dev.castive.javalin_auth.auth.provider.flow.AbstractOAuth2Provider
 import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
-import dev.castive.javalin_auth.util.EnvUtil
-import dev.castive.javalin_auth.util.Util
+import dev.castive.javalin_auth.config.OAuth2Config
 import dev.castive.log2.Log
+import dev.castive.log2.logi
+import dev.dcas.util.extend.parse
 
 @Suppress("unused")
-class GoogleProvider: AbstractOAuth2Provider(
+class GoogleProvider(config: OAuth2Config): AbstractOAuth2Provider(
 	BaseFlow(
 		authorizeUrl = "www.googleapis.com/oauth2/v4/token",
 		apiUrl = "https://www.googleapis.com/oauth2",
-		callbackUrl = EnvUtil.getEnv(EnvUtil.GOOGLE_CALLBACK),
+		callbackUrl = config.callbackUrl,
 		scope = "profile",
-		clientId = EnvUtil.getEnv(EnvUtil.GOOGLE_CLIENT_ID),
-		clientSecret = EnvUtil.getEnv(EnvUtil.GOOGLE_CLIENT_SECRET),
+		clientId = config.clientId,
+		clientSecret = config.clientSecret,
 		api = GoogleApi20.instance()
 	)
 ) {
 	override val sourceName: String
 		get() = "google"
 
-	override fun isTokenValid(accessToken: String): Boolean {
+	override fun isTokenValid(accessToken: String, data: Any?): Boolean {
 		return true
 	}
 
 	override fun getUserInformation(accessToken: String): User2? {
 		// Create an sign the request
-		val request = OAuthRequest(Verb.GET, "${flow.apiUrl}/v3/userinfo")
+		val request = OAuthRequest(Verb.GET, "${provider.apiUrl}/v3/userinfo")
 		service.signRequest(accessToken, request)
 		val response = service.execute(request)
 		// If the request failed, return null
@@ -58,7 +59,7 @@ class GoogleProvider: AbstractOAuth2Provider(
 			return null
 		}
 		Log.d(javaClass, "Got response from google: ${response.body}")
-		val res = Util.gson.fromJson(response.body, GoogleUser::class.java)
+		val res = response.body.parse(GoogleUser::class.java)
 		return User2(res)
 	}
 
@@ -67,19 +68,12 @@ class GoogleProvider: AbstractOAuth2Provider(
 	 * https://developers.google.com/identity/protocols/OpenIDConnect#validatinganidtoken
 	 */
 	private fun validateTokenResponse(user: GoogleUser): Boolean {
-		if(user.iss != "https://accounts.google.com" && user.iss != "accounts.google.com") {
-			Log.a(javaClass, "Processed token with iss: ${user.iss}")
-			return false
+		"Validating Google response: [iss: ${user.iss}, aud: ${user.aud}, exp: ${user.exp}".logi(javaClass)
+		return when {
+			user.iss != "https://accounts.google.com" && user.iss != "accounts.google.com" -> false
+			user.aud != provider.clientId -> false
+			user.exp < System.currentTimeMillis() -> false
+			else -> true
 		}
-		if(user.aud != flow.clientId) {
-			Log.a(javaClass, "Processed token with aud: ${user.aud}")
-			return false
-		}
-		if(user.exp < System.currentTimeMillis()) {
-			Log.w(javaClass, "Processed token with exp: ${user.exp}, versus: ${System.currentTimeMillis()}")
-			return false
-		}
-
-		return true
 	}
 }
