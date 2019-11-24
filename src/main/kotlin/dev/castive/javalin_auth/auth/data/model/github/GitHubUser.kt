@@ -17,10 +17,13 @@
 
 package dev.castive.javalin_auth.auth.data.model.github
 
+import com.google.gson.annotations.SerializedName
+
 data class GitHubUser(
 	val login: String, // username
 	val id: Int,
-	val avatar_url: String,
+	@SerializedName("avatar_url")
+	val avatarUrl: String,
 	val type: String, // probably always "User"
 	val name: String // display name
 )

@@ -12,11 +12,26 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
  */
 
-package dev.castive.javalin_auth.auth.response
+package dev.castive.javalin_auth.util
 
-public object AuthenticateResponse {
-    public const val header = "WWW-Authenticate"
-    public const val response = "Bearer realm=\"example\""
+import dev.castive.javalin_auth.auth.JwtHelper
+import dev.castive.log2.loga
+import dev.dcas.util.crypto.Crypto
+
+object SigningKey {
+	var key: String = Crypto.get()
+	val jwtHelper = JwtHelper()
+
+	/**
+	 * Update the value used as an encryption key
+	 */
+	fun newKey(newKey: String) {
+		"Updating encryption key value".loga(javaClass)
+		key = newKey
+		// has a dependency on the above key
+		jwtHelper.buildSigner(key)
+	}
 }

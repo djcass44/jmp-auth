@@ -16,82 +16,11 @@
 
 package dev.castive.javalin_auth.auth
 
-import dev.castive.javalin_auth.auth.connect.BaseConfig
-import dev.castive.javalin_auth.auth.external.UserIngress
-import dev.castive.javalin_auth.auth.external.UserVerification
-import dev.castive.javalin_auth.auth.provider.BaseProvider
-import dev.castive.javalin_auth.auth.provider.InternalProvider
-import dev.castive.log2.Log
-import java.util.*
-import kotlin.concurrent.fixedRateTimer
+import dev.dcas.util.cache.TimedCache
 
-class Providers(private val config: BaseConfig, private val provider: BaseProvider?) {
+class Providers {
 	companion object {
-		lateinit var internalProvider: InternalProvider
-		var primaryProvider: BaseProvider? = null
-
-		lateinit var validator: UserIngress
-	}
-
-	private var syncAttempts = 0
-	private lateinit var syncTimer: Timer
-
-	private var syncing = false
-
-	fun init(verification: UserVerification) {
-		internalProvider = InternalProvider(verification)
-		primaryProvider = provider
-		if(config.enabled) {
-			startCRON()
-		}
-	}
-
-	private fun startCRON() {
-		syncTimer = fixedRateTimer(javaClass.name, true, 0, config.syncRate) {
-			if(!syncing)
-				sync()
-			else Log.e(javaClass, "Unable to run CRON sync [reason: sync already running]")
-		}
-	}
-
-	fun syncIfPossible() {
-		if(!syncing) {
-			Log.i(javaClass, "Running user requested sync")
-			sync()
-		}
-		else Log.v(javaClass, "Unable to sync [reason: sync already running]")
-	}
-
-	private fun sync() {
-		syncing = true
-		val maxAttempts = config.maxConnectAttempts
-		if(syncAttempts >= maxAttempts) { // Give up if we fail more than 5 times (default 25 minutes)
-			Log.f(javaClass, "Reached maximum failure rate for provider sync, giving up")
-			syncTimer.cancel()
-			syncing = false
-			return
-		}
-		syncAttempts++
-		if(primaryProvider == null) {
-			Log.i(javaClass, "Skipping user sync, no provider setup")
-			syncing = false
-			return
-		}
-		Log.i(javaClass, "Running batch update using ${primaryProvider!!::class.java.name}")
-		Log.v(javaClass, "${primaryProvider!!::class.java.name} attempt $syncAttempts/$maxAttempts")
-		primaryProvider!!.setup()
-		val users = primaryProvider!!.getUsers()
-		if(users.isEmpty()) {
-			Log.w(javaClass, "External provider: ${primaryProvider?.getName()} returned 0 users, something might have gone wrong")
-			syncing = false
-			return
-		}
-		Log.i(javaClass, "External provider: ${primaryProvider?.getName()} found ${users.size} users")
-		// Load groups
-		val groups = primaryProvider!!.getGroups()
-		syncAttempts = 0 // Reset counter because we got a valid connection
-		validator.ingestUsers(users)
-		validator.ingestGroups(groups)
-		syncing = false
+		// timed cache containing requestToken -> userId mapping
+		internal val cache = TimedCache<String, String>(60, null, 1_000L)
 	}
 }

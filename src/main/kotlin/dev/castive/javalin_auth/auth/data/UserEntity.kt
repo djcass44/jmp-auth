@@ -15,26 +15,10 @@
  *
  */
 
-package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
+package dev.castive.javalin_auth.auth.data
 
-data class GroupSearch(val expand: String, val groups: Array<Groups>) {
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as GroupSearch
-
-		if (expand != other.expand) return false
-		if (!groups.contentEquals(other.groups)) return false
-
-		return true
-	}
-
-	override fun hashCode(): Int {
-		var result = expand.hashCode()
-		result = 31 * result + groups.contentHashCode()
-		return result
-	}
-}
-
-data class Groups(val link: Link, val name: String)
+data class UserEntity<T>(
+	val id: T,
+	val username: String,
+	val source: String
+)

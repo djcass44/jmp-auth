@@ -24,20 +24,20 @@ import dev.castive.javalin_auth.auth.data.User2
 import dev.castive.javalin_auth.auth.data.model.github.GitHubUser
 import dev.castive.javalin_auth.auth.provider.flow.AbstractOAuth2Provider
 import dev.castive.javalin_auth.auth.provider.flow.BaseFlow
-import dev.castive.javalin_auth.util.EnvUtil
-import dev.castive.javalin_auth.util.Util
+import dev.castive.javalin_auth.config.OAuth2Config
 import dev.castive.log2.Log
+import dev.dcas.util.extend.toBasic
 import org.eclipse.jetty.http.HttpStatus
 
 @Suppress("unused")
-class GitHubProvider: AbstractOAuth2Provider(
+class GitHubProvider(config: OAuth2Config): AbstractOAuth2Provider(
 	BaseFlow(
 		authorizeUrl = "https://github.com/login/oauth/authorize",
 		apiUrl = "https://api.github.com",
-		callbackUrl = EnvUtil.getEnv(EnvUtil.GITHUB_CALLBACK),
+		callbackUrl = config.callbackUrl,
 		scope = "read:user",
-		clientId = EnvUtil.getEnv(EnvUtil.GITHUB_CLIENT_ID),
-		clientSecret = EnvUtil.getEnv(EnvUtil.GITHUB_CLIENT_SECRET),
+		clientId = config.clientId,
+		clientSecret = config.clientSecret,
 		api = GitHubApi.instance()
 	)
 ) {
@@ -47,8 +47,8 @@ class GitHubProvider: AbstractOAuth2Provider(
 	/**
 	 * Check if the access token is still valid
 	 */
-	override fun isTokenValid(accessToken: String): Boolean {
-		val (_, response, result) = "${flow.apiUrl}/applications/${flow.clientId}/tokens/$accessToken".httpGet().appendHeader("Authorization", Util.basicAuth(flow.clientId, flow.clientSecret)).responseString()
+	override fun isTokenValid(accessToken: String, data: Any?): Boolean {
+		val (_, response, result) = "${provider.apiUrl}/applications/${provider.clientId}/tokens/$accessToken".httpGet().appendHeader("Authorization", (provider.clientId to provider.clientSecret).toBasic()).responseString()
 		val code = response.statusCode
 		Log.d(javaClass, "Got response code: $code")
 		Log.d(javaClass, "Got response body: ${result.component1()}")
@@ -60,7 +60,7 @@ class GitHubProvider: AbstractOAuth2Provider(
 	 * Get the information required to create a user
 	 */
 	override fun getUserInformation(accessToken: String): User2? {
-		val (_, response, result) = "${flow.apiUrl}/user".httpGet().appendHeader("Authorization", "token $accessToken").responseObject<GitHubUser>()
+		val (_, response, result) = "${provider.apiUrl}/user".httpGet().appendHeader("Authorization", "token $accessToken").responseObject<GitHubUser>()
 		if(response.statusCode != 200) {
 			Log.e(javaClass, "Failed to load user information: ${result.component2()?.exception}")
 			return null

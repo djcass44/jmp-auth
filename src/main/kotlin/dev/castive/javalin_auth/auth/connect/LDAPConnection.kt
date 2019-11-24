@@ -16,116 +16,86 @@
 
 package dev.castive.javalin_auth.auth.connect
 
-import dev.castive.javalin_auth.auth.data.model.atlassian_crowd.BasicAuthentication
-import dev.castive.javalin_auth.except.MinimalConnectionBreachException
-import dev.castive.log2.Log
+import dev.castive.javalin_auth.config.LDAP2Config
+import dev.castive.log2.loge
+import dev.castive.log2.logi
+import dev.castive.log2.logv
 import java.util.*
 import javax.naming.Context
-import javax.naming.NamingException
+import javax.naming.directory.DirContext
 import javax.naming.directory.InitialDirContext
 import javax.naming.directory.SearchControls
 import javax.naming.directory.SearchResult
 
-class LDAPConnection(private val config: LDAPConfig,
-                     private val serviceAccount: BasicAuthentication,
-                     private val nested: Boolean = false, private val reconnectOnLogin: Boolean = false) {
-	var connected = false
-		private set
-	private lateinit var connection: InitialDirContext
+class LDAPConnection(private val config: LDAP2Config) {
 
-	init {
-		connect()
-	}
-
-	/**
-	 * Attempt to open an LDAP connection
-	 * Note: if there is an existing connection, it will be closed first
-	 */
-	private fun connect() {
-		if(connected) {
-			Log.w(javaClass, "Found existing LDAP connection, this will be closed...")
-			close()
-		}
-		val env = Hashtable<String, String>()
+	private fun ldapContext(env: Hashtable<String, String>): DirContext {
 		env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
-//		env["com.sun.jndi.ldap.connect.pool"] = "false"
-		env[Context.PROVIDER_URL] = "ldap://${config.server}:${config.port}/"
-		env[Context.SECURITY_PRINCIPAL] = serviceAccount.username
-		env[Context.SECURITY_CREDENTIALS] = serviceAccount.password
-		try {
-			connection = InitialDirContext(env)
-			Log.ok(javaClass, "LDAP Authentication success!")
-			connected = true
-		}
-		catch (e: NamingException) {
-			Log.e(javaClass, "LDAP Authentication failure: $e")
-			connected = false
-		}
-	}
-
-	private fun reconnect() {
-		close()
-		connect()
+		env[Context.PROVIDER_URL] = "ldap://${config.url}:${config.port}/"
+		return InitialDirContext(env)
 	}
 
 	/**
-	 * Attempt to close the LDAP connection
+	 * Locate a user object in the directory
 	 */
-	fun close() {
-		try {
-			if(!connected) {
-				Log.i(javaClass, "There is no active connection to close!")
-				return
-			}
-			connection.close()
-			Log.i(javaClass, "LDAP Connection closed")
-			connected = false
+	fun search(username: String): SearchResult? {
+		val env = Hashtable<String, String>(mutableMapOf(
+			Context.SECURITY_AUTHENTICATION to "simple",
+			Context.SECURITY_PRINCIPAL to config.username,
+			Context.SECURITY_CREDENTIALS to config.password
+		))
+		val ctx = try {
+			ldapContext(env)
 		}
-		catch (e: NamingException) {
-			Log.e(javaClass, "Failed to close LDAP connection")
-		}
-	}
-
-	/**
-	 * Run an arbitrary search
-	 */
-	fun searchFilter(filter: String, contextDN: String = config.contextDN): ArrayList<SearchResult>? {
-		if(!this::connection.isInitialized) {
-			Log.d(javaClass, "LDAP connection not ready...")
+		catch (e: Exception) {
+			"Failed to establish LDAP connection: $e".loge(javaClass)
 			return null
 		}
-		if(nested) throw MinimalConnectionBreachException()
-		val controls = SearchControls()
-		controls.searchScope = SearchControls.SUBTREE_SCOPE
-		val searchResults = connection.search(contextDN, filter, controls)
-		return if(searchResults.hasMoreElements()) {
-			val results = arrayListOf<SearchResult>()
-			while (searchResults.hasMore()) results.add(searchResults.next())
-			results
+
+		val filter = "(${config.uidField}=$username)"
+		val ctrl = SearchControls().apply {
+			searchScope = SearchControls.SUBTREE_SCOPE
 		}
-		else arrayListOf()
+		val answer = ctx.search(config.contextDN, filter, ctrl)
+
+		return if (answer.hasMore()) {
+			val result = answer.next()
+			result
+		}
+		else null
 	}
 
 	/**
-	 * Verify that a users credentials are correct
-	 * Attempts to create a new LDAP connection and login as that user
+	 * Get a users DN from a uid
 	 */
-	fun checkUserAuth(uid: String, password: String, identifier: String = "uid"): Boolean {
-		if(nested) throw MinimalConnectionBreachException()
-		// This is a bad hack and not scalable
-		if(reconnectOnLogin) reconnect()
-		val user = searchFilter("($identifier=$uid)")
-		if(user == null || user.size == 0 || user.size > 1) return false  // There must be only 1 user with a uid
+	fun getDN(user: String): String? = search(user)?.nameInNamespace
 
-		val userConfig = LDAPConfig(config.server, config.port, config.contextDN)
+	fun checkUserAuth(username: String, password: String): Boolean {
+		val dn = getDN(username) ?: run {
+			"Could not find DN for user: $username".logi(javaClass)
+			return false
+		}
+		return bindUser(dn, password)
+	}
 
-		// Open a new connection with the users creds
-		val verifyConnection = LDAPConnection(userConfig, nested = true, serviceAccount = BasicAuthentication(uid, password))
-		val connect = verifyConnection.connected
-		Log.i(javaClass, "User credential validation: $connect")
-
-		verifyConnection.close()
-
-		return connect
+	/**
+	 * Attempt to create a bind using the users credentials
+	 * If we cannot create the bind, the provided credentials must be invalid
+	 * @return false if credentials are invalid or there was an error connecting
+	 */
+	fun bindUser(dn: String, password: String): Boolean {
+		val env = Hashtable<String, String>(mutableMapOf(
+			Context.SECURITY_AUTHENTICATION to "simple",
+			Context.SECURITY_PRINCIPAL to dn,
+			Context.SECURITY_CREDENTIALS to password
+		))
+		return try {
+			ldapContext(env)
+			true
+		}
+		catch (e: Exception) {
+			"Failed to bind user [$dn]: $e".logv(javaClass)
+			false
+		}
 	}
 }

@@ -15,26 +15,10 @@
  *
  */
 
-package dev.castive.javalin_auth.auth.data.model.atlassian_crowd
+package dev.castive.javalin_auth.auth.response
 
-data class UserSearch(val expand: String, val users: Array<Users>) {
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as UserSearch
-
-		if (expand != other.expand) return false
-		if (!users.contentEquals(other.users)) return false
-
-		return true
-	}
-
-	override fun hashCode(): Int {
-		var result = expand.hashCode()
-		result = 31 * result + users.contentHashCode()
-		return result
-	}
+object Responses {
+	const val NOT_FOUND_PROVIDER = "That provider could not be found."
+	const val NOT_FOUND_USER = "That user could not be found."
+	const val NO_SOURCE_HEADER = "X-Auth-Source header is not set."
 }
-
-data class Users(val link: Link, val name: String)

@@ -15,21 +15,13 @@
  *
  */
 
-package dev.castive.javalin_auth.util
+package dev.castive.javalin_auth.auth.external
 
-internal object EnvUtil {
-	fun getEnv(name: String, default: String = ""): String {
-		val env = System.getenv(name)
-		return if (env.isNullOrEmpty()) default else env
-	}
+import dev.castive.javalin_auth.api.OAuth2
+import dev.castive.javalin_auth.auth.data.UserEntity
 
-	const val GITHUB_ENABLED = "GITHUB_ENABLED"
-	const val GITHUB_CALLBACK = "GITHUB_CALLBACK"
-	const val GITHUB_CLIENT_ID = "GITHUB_CLIENT_ID"
-	const val GITHUB_CLIENT_SECRET = "GITHUB_CLIENT_SECRET"
-
-	const val GOOGLE_ENABLED = "GOOGLE_ENABLED"
-	const val GOOGLE_CALLBACK = "GOOGLE_CALLBACK"
-	const val GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID"
-	const val GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET"
+interface Session<T> {
+	fun createSession(user: UserEntity<T>): OAuth2.TokenResponse?
+	fun disableSessions(token: String)
+	fun getForRefresh(refresh: String): UserEntity<T>?
 }
