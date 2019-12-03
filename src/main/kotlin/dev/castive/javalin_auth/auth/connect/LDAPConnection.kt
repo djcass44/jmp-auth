@@ -20,6 +20,7 @@ import dev.castive.javalin_auth.config.LDAP2Config
 import dev.castive.log2.loge
 import dev.castive.log2.logi
 import dev.castive.log2.logv
+import dev.castive.log2.logw
 import java.util.*
 import javax.naming.Context
 import javax.naming.directory.DirContext
@@ -39,11 +40,19 @@ class LDAPConnection(private val config: LDAP2Config) {
 	 * Locate a user object in the directory
 	 */
 	fun search(username: String): SearchResult? {
-		val env = Hashtable<String, String>(mutableMapOf(
-			Context.SECURITY_AUTHENTICATION to "simple",
-			Context.SECURITY_PRINCIPAL to config.username,
-			Context.SECURITY_CREDENTIALS to config.password
-		))
+		val env = if(config.username.isNotBlank() && config.password.isNotBlank()) {
+			Hashtable<String, String>(mutableMapOf(
+				Context.SECURITY_AUTHENTICATION to "simple",
+				Context.SECURITY_PRINCIPAL to config.username,
+				Context.SECURITY_CREDENTIALS to config.password
+			))
+		}
+		else {
+			"Username or password is blank, attempting anonymous binding".logw(javaClass)
+			Hashtable(mutableMapOf(
+				Context.SECURITY_AUTHENTICATION to "none"
+			))
+		}
 		val ctx = try {
 			ldapContext(env)
 		}

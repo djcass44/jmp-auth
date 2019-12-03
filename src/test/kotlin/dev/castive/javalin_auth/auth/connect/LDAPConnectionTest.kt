@@ -34,6 +34,15 @@ class LDAPConnectionTest {
 		"cn=admin,dc=example,dc=org",
 		"admin"
 	)
+	private val configAnon = LDAP2Config(
+		true,
+		"localhost",
+		389,
+		"dc=example,dc=org",
+		"uid",
+		"",
+		""
+	)
 
 	@Test
 	fun `get DN from uid`() {
@@ -42,15 +51,21 @@ class LDAPConnectionTest {
 	}
 
 	@Test
+	fun `get DN from uid anonymously`() {
+		val connection = LDAPConnection(configAnon)
+		assertThat(connection.getDN("tstark"), `is`("cn=Tony Stark,dc=example,dc=org"))
+	}
+
+	@Test
 	fun `can bind as user`() {
 		val connection = LDAPConnection(config)
-		assertTrue(connection.bindUser("cn=Tony Stark,dc=example,dc=org", "password"))
+		assertTrue(connection.bindUser("cn=Tony Stark,dc=example,dc=org", "arstarst"))
 	}
 
 	@Test
 	fun `verify basic authentication`() {
 		val connection = LDAPConnection(config)
-		assertTrue(connection.checkUserAuth("tstark", "password"))
+		assertTrue(connection.checkUserAuth("tstark", "arstarst"))
 	}
 
 	@Test
